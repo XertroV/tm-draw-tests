@@ -1,0 +1,8 @@
+[meta]
+name     = "test draw"
+author   = "XertroV"
+category = "Dev"
+version  = "0.1.5"
+
+[script]
+#__DEFINES__
