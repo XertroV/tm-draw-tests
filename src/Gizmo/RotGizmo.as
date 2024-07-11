@@ -20,20 +20,20 @@ class RotationGizmo {
     }
 
     RotationGizmo@ AddTmpRotation(Axis axis, float delta_theta) {
-        tmpRot *= quat(AxisToVec(axis), delta_theta);
+        tmpRot = tmpRot * quat(AxisToVec(axis), delta_theta);
     }
 
     RotationGizmo@ ApplyTmpRotation() {
-        rot *= tmpRot;
+        rot = rot * tmpRot;
         tmpRot = quat(0, 0, 0, 1);
     }
 
     void DrawUIWindow() {
         // 10 meters in front of camera
-        vec3 pos = Camera::GetProjectionMatrix() * vec3(0, 0, -10);
-        DrawElipseControl(pos, rot);
-        DrawElipseControl(pos, rot * ROT_Q_AROUND_UP);
-        DrawElipseControl(pos, rot * ROT_Q_AROUND_FWD);
+        vec3 pos = (Camera::GetProjectionMatrix() * vec3(0, 0, -10)).xyz;
+        DrawProjectedCircle(pos, rot);
+        DrawProjectedCircle(pos, rot * ROT_Q_AROUND_UP);
+        DrawProjectedCircle(pos, rot * ROT_Q_AROUND_FWD);
         UX::PushInvisibleWindowStyle();
         if (UI::Begin("###rgz"+name)) {
             vec2 wp = UI::GetWindowPos() / g_scale;
@@ -43,10 +43,6 @@ class RotationGizmo {
         }
         UI::End();
         UX::PopInvisibleWindowStyle();
-    }
-
-    void DrawElipseControl(vec2 winPos, const quat &in rot) {
-
     }
 
     void DrawProjectedCircle(vec3 &in pos, quat&in rot, float scale = 1.0) {

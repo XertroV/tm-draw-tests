@@ -10,7 +10,7 @@ enum Axis {
     X, Y, Z
 }
 
-vec3& AxisToVec(Axis a) {
+const vec3& AxisToVec(Axis a) {
     switch (a) {
         case Axis::X: return LEFT;
         case Axis::Y: return UP;
