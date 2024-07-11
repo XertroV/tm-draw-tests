@@ -203,16 +203,18 @@ namespace NG {
             }
         }
 
+        bool nodeCtxMenuOpen = false;
 
         void DrawInner() override {
-            if (UI::BeginChild(idNonce, vec2(), false, UI::WindowFlags::AlwaysAutoResize)) {
+            nodeCtxMenuOpen = false;
+            if (UI::BeginChild(idNonce, vec2(), UI::ChildFlags::None, UI::WindowFlags::None)) {
                 if (UI::Button("Save")) {
                     startnew(CoroutineFunc(SaveGraph));
                 }
                 DrawGraphInChild();
             }
             UI::EndChild();
-            DrawRightClickMenu();
+            if (!nodeCtxMenuOpen) DrawRightClickMenu();
         }
 
         void DrawRightClickMenu() {
@@ -236,11 +238,17 @@ namespace NG {
                     if (UI::MenuItem("Scalar Func (1)")) {
                         AddNode(MathFunc());
                     }
-                    if (UI::MenuItem("Scalar Func (2)")) {
-                        AddNode(MathFunc());
-                    }
-                    if (UI::MenuItem("Scalar Func (3)")) {
-                        AddNode(MathFunc());
+                    // if (UI::MenuItem("Scalar Func (2)")) {
+                    //     AddNode(MathFunc2());
+                    // }
+                    // if (UI::MenuItem("Scalar Func (3)")) {
+                    //     AddNode(MathFunc3());
+                    // }
+                    UI::EndMenu();
+                }
+                if (UI::BeginMenu("Add Visualizer")) {
+                    if (UI::MenuItem("Plot (x,y)")) {
+                        AddNode(PlotNode());
                     }
                     UI::EndMenu();
                 }

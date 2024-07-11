@@ -95,7 +95,7 @@ namespace NG {
         bool get_IsOutput() { return ty == SocketType::Output; }
 
         void Connect(Noodle@ edge) {
-            if (!allowMultipleEdges && edges.Length > 0) {
+            if (IsInput && edges.Length > 0) {
                 if (edges[0] !is edge) {
                     trace('Connect is disconnecting prior edge: ' + edges[0].id);
                     startnew(CoroutineFunc(edges[0].Disconnect));
@@ -387,10 +387,10 @@ namespace NG {
 
         void UIDraw(UI::DrawList@ dl, vec2 startCur, vec2 startPos, vec2 mousePos) {
             dl.AddLine(startPos + FromPos, startPos + ToPos, cLimeGreen, 3.f);
-            if (DRAW_DEBUG) {
-                UI::SetCursorPos(startCur + vec2(FromPos + ToPos) / 2. - vec2(0, 16.) - Draw::MeasureString(id, g_NormFont, 16.) / 2.);
-                UI::Text(id);
-            }
+            // if (DRAW_DEBUG) {
+            //     UI::SetCursorPos(startCur + vec2(FromPos + ToPos) / 2. - vec2(0, 16.) - Draw::MeasureString(id, g_NormFont, 16.) / 2.);
+            //     UI::Text(id);
+            // }
         }
     }
 
@@ -412,6 +412,7 @@ namespace NG {
             print("Node::FromJson: " + pos.ToString() + " from " + Json::Write(j));
             pos.x = Math::Max(0., pos.x);
             pos.y = Math::Max(0., pos.y);
+            Update();
             return this;
         }
 
@@ -516,7 +517,7 @@ namespace NG {
             }
         }
 
-        int GetInt(int index) {
+        int64 GetInt(int index) {
             // Read the value from the input
             if (index < inputs.Length && inputs[index] !is null) {
                 return inputs[index].GetInt();
@@ -524,7 +525,7 @@ namespace NG {
             return 0;
         }
 
-        void WriteInt(int index, int value) {
+        void WriteInt(int index, int64 value) {
             // Write the value to the output
             if (index < outputs.Length && outputs[index] !is null) {
                 outputs[index].WriteInt(value);
@@ -589,11 +590,17 @@ namespace NG {
 
         void UIDrawRightClickMenu() {
             if (UI::BeginPopupContextItem(id+"rc")) {
+                graph.nodeCtxMenuOpen = true;
+                UIDrawRightClickMenuBeforeStd();
                 if (UI::MenuItem("Delete")) {
                     Delete();
                 }
                 UI::EndPopup();
             }
+        }
+
+        void UIDrawRightClickMenuBeforeStd() {
+            // node specific
         }
 
         vec2 GetParamsSize() {
@@ -738,9 +745,8 @@ namespace NG {
         }
 
         Node@ FromJson(Json::Value@ j) override {
-            Node::FromJson(j);
             op = eMathOps(int(j["op"]));
-            print("MathOp::FromJson: " + op + " pos: " + pos.ToString());;
+            Node::FromJson(j);
             return this;
         }
 
@@ -778,7 +784,7 @@ namespace NG {
                 case eMathOps::Divide: return "a / b";
                 case eMathOps::Mod: return "a % b";
                 case eMathOps::Exp: return "a ^ b";
-                case eMathOps::Log: return "lg_a(b)";
+                case eMathOps::Log: return "log_a(b)";
             }
             return "???";
         }
@@ -810,8 +816,8 @@ namespace NG {
         }
 
         Node@ FromJson(Json::Value@ j) override {
-            Node::FromJson(j);
             func = eMathFunc(int(j["func"]));
+            Node::FromJson(j);
             return this;
         }
 
@@ -886,7 +892,7 @@ namespace NG {
 
 
     class IntValue : Node {
-        int value;
+        int64 value;
 
         IntValue() {
             super("Int");
@@ -894,8 +900,8 @@ namespace NG {
         }
 
         Node@ FromJson(Json::Value@ j) override {
+            value = int64(j["v"]);
             Node::FromJson(j);
-            value = int(j["v"]);
             return this;
         }
 
@@ -935,9 +941,8 @@ namespace NG {
         }
 
         Node@ FromJson(Json::Value@ j) override {
-            Node::FromJson(j);
             value = double(j["v"]);
-            Update();
+            Node::FromJson(j);
             return this;
         }
 
@@ -1013,14 +1018,18 @@ namespace NG {
         }
 
         Json::Value@ ToJson() override {
+            trace('time val to json start');
             Json::Value@ j = Node::ToJson();
+            trace('time val to json mid');
             j["type"] = "TimeValue";
+            trace('time val to json done');
             return j;
         }
     }
 
 
     Node@ NodeFromJson(Json::Value@ j) {
+        print("NodeFromJson: " + Json::Write(j));
         string type = j["type"];
         Node@ node;
         if (type == "MathOp") {
@@ -1033,6 +1042,8 @@ namespace NG {
             @node = FloatValue().FromJson(j);
         } else if (type == "TimeValue") {
             @node = TimeValue().FromJson(j);
+        } else if (type == "PlotNode") {
+            @node = PlotNode().FromJson(j);
         } else {
             warn("Unknown node type: " + type);
         }

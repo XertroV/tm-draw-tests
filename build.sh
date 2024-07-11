@@ -58,6 +58,7 @@ for pluginSrc in ${pluginSources[@]}; do
   BUILD_NAME=$PLUGIN_NAME-$(date +%s).zip
   RELEASE_NAME=$PLUGIN_NAME-$PLUGIN_VERSION.op
   PLUGINS_DIR=${PLUGINS_DIR:-$HOME/win/OpenplanetNext/Plugins}
+  PLUGIN_FOLDER_NAME=$PLUGIN_NAME
   PLUGIN_DEV_LOC=$PLUGINS_DIR/$PLUGIN_NAME
   PLUGIN_RELEASE_LOC=$PLUGINS_DIR/$RELEASE_NAME
 
@@ -112,6 +113,14 @@ for pluginSrc in ${pluginSources[@]}; do
       ;;
     *)
       _colortext16 red "\n⚠ Error: unknown build mode: $_build_mode"
+  esac
+
+
+  case $_build_mode in
+    dev|prerelease|unittest)
+      # trigger remote build
+      tm-remote-build load folder "$PLUGIN_FOLDER_NAME" --host 172.18.16.1 --port 30000 -v -d "$HOME/OpenplanetNext/"
+      ;;
   esac
 
 

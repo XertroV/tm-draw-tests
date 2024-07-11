@@ -13,6 +13,7 @@ void RenderMenu() {
 }
 
 void Render() {
+    // RenderFireworkTest();
     if (!g_Window || root is null) return;
     if (UI::Begin(PluginName, g_Window)) {
         root.DrawTabsAsSidebar();
@@ -22,20 +23,46 @@ void Render() {
 
 float _PluginLoadTime = Time::Now;
 float g_TimeMs = _PluginLoadTime;
+float g_DT;
+vec2 g_screen = vec2(2000);
 void Update(float dt) {
+    g_DT = dt;
     g_TimeMs += dt;
+    g_screen = vec2(Draw::GetWidth(), Draw::GetHeight());
 }
+
+
+/** Called when the plugin is unloaded and completely removed from memory.
+*/
+void OnDestroyed() {
+    if (g_GraphTab !is null) g_GraphTab.SaveGraph();
+}
+
 
 TabGroup@ root;
 NG::GraphTab@ g_GraphTab;
 
 void Main() {
+    // startnew(RunFireworksTest);
+    // RunSaveMapFromReplayTest();
+    // BlockInfoGroups::Run();
+    // BlockInfoGroups::RunGetPillarsAndReplacements();
+    // startnew(RunFindBlocks);
+    InitNodeGraphStuff();
+    // startnew(RunJsonBenchmarks);
+}
+
+
+void InitNodeGraphStuff() {
     startnew(LoadFonts);
     yield();
     yield();
     @root = RootTabGroupCls();
     @g_GraphTab = NG::GraphTab(root);
+    sleep(0);
+    yield(500);
 }
+
 
 vec2 g_lastMousePos;
 
@@ -46,11 +73,66 @@ void OnMouseMove(int x, int y) {
 }
 
 
+void RunJsonBenchmarks() {
+    Bench(FromFileOpenplanetJson, "FromFileOpenplanetJson", 10, true);
+    Bench(WriteOpenplanetJson, "WriteOpenplanetJson", 10, true);
+    Bench(ToFileOpenplanetJson, "ToFileOpenplanetJson", 10, true);
+    Bench(InstanceSimpleJsonObj1k, "InstanceSimpleJsonObj1k", 1000);
+    Bench(WriteSimpleJsonObj1k, "WriteSimpleJsonObj1k", 1000);
+    Bench(ParseSimpleJsonObj1k, "ParseSimpleJsonObj1k", 1000);
+}
 
+void Bench(CoroutineFunc@ f, string name, int count, bool yield_between = false) {
+    uint start = Time::Now;
+    uint duration = 0.;
+    for (int i = 0; i < count; i++) {
+        f();
+        if (yield_between) {
+            duration += Time::Now - start;
+            sleep(0);
+            start = Time::Now;
+        }
+    }
+    uint end = Time::Now;
+    uint ms = end - start + duration;
+    trace(name + " took " + (float(ms) / float(count)) + "ms per iteration");
+}
 
+Json::Value@ OpenplanetJson;
 
+void FromFileOpenplanetJson() {
+    @OpenplanetJson = Json::FromFile(IO::FromDataFolder("OpenplanetNext.json"));
+}
 
+void WriteOpenplanetJson() {
+    Json::Write(OpenplanetJson);
+}
 
+void ToFileOpenplanetJson() {
+    Json::ToFile(IO::FromDataFolder("OpenplanetNext.json.tmp"), OpenplanetJson);
+}
+
+Json::Value@ SimpleJson;
+
+void InstanceSimpleJsonObj1k() {
+    @SimpleJson = Json::Object();
+    for (int i = 0; i < 100; i++) {
+        SimpleJson["key" + i] = Json::Array();
+        for (int j = 0; j < 100; j++) {
+            SimpleJson["key" + i].Add(j);
+        }
+    }
+}
+
+string simpleJsonStr;
+
+void WriteSimpleJsonObj1k() {
+    simpleJsonStr = Json::Write(SimpleJson);
+}
+
+void ParseSimpleJsonObj1k() {
+    Json::Parse(simpleJsonStr);
+}
 
 
 
