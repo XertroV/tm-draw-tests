@@ -13,6 +13,10 @@ void RenderMenu() {
 }
 
 void Render() {
+
+    if (testGizmo is null) @testGizmo = RotationGizmo("test");
+    testGizmo.DrawAll();
+
     // RenderFireworkTest();
     if (!g_Window || root is null) return;
     if (UI::Begin(PluginName, g_Window)) {
@@ -72,6 +76,14 @@ void OnMouseMove(int x, int y) {
     // trace(g_lastMousePos.ToString());
 }
 
+bool IsLMBPressed() {
+    return UI::IsMouseDown(UI::MouseButton::Left);
+}
+
+bool IsShiftDown() {
+    // return (Time::Now / 1000) % 2 == 0;
+    return false;
+}
 
 void RunJsonBenchmarks() {
     Bench(FromFileOpenplanetJson, "FromFileOpenplanetJson", 10, true);
@@ -82,7 +94,7 @@ void RunJsonBenchmarks() {
     Bench(ParseSimpleJsonObj1k, "ParseSimpleJsonObj1k", 1000);
 }
 
-void Bench(CoroutineFunc@ f, string name, int count, bool yield_between = false) {
+void Bench(CoroutineFunc@ f, const string &in name, int count, bool yield_between = false) {
     uint start = Time::Now;
     uint duration = 0.;
     for (int i = 0; i < count; i++) {
