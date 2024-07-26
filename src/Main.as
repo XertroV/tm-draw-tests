@@ -17,6 +17,12 @@ void Render() {
     // if (testGizmo is null) @testGizmo = RotationTranslationGizmo("test");
     // testGizmo.DrawAll();
 
+    mat4 m = mat4::Translate(vec3(764, 140, 764)) * mat4::Scale(vec3(32, 8, 32));
+    auto faceOrder = getCubeFaceBackToFront(m);
+    for (uint i = 0; i < 6; i++) {
+        drawCubeFace(m, faceOrder[i]);
+    }
+
     // RenderFireworkTest();
     if (!g_Window || root is null) return;
     if (UI::Begin(PluginName, g_Window)) {
