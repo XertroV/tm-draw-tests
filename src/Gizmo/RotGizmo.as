@@ -1,5 +1,12 @@
-RotationGizmo@ testGizmo;
+RotationTranslationGizmo@ testGizmo;
 
+array<vec3>@[] axisDragArrows = {
+    {vec3(.3, 0, 0), vec3(1, 0, 0), vec3(0.9, 0, 0.1), vec3(0.9, 0, -0.1), vec3(1, 0, 0), vec3(0.9, 0.1, 0), vec3(0.9, -0.1, 0), vec3(1, 0, 0)},
+    {vec3(0, .3, 0), vec3(0, 1, 0), vec3(0.1, 0.9, 0), vec3(-0.1, 0.9, 0), vec3(0, 1, 0), vec3(0, 0.9, 0.1), vec3(0, 0.9, -0.1), vec3(0, 1, 0)},
+    {vec3(0, 0, .3), vec3(0, 0, 1), vec3(0.1, 0, 0.9), vec3(-0.1, 0, 0.9), vec3(0, 0, 1), vec3(0, 0.1, 0.9), vec3(0, -0.1, 0.9), vec3(0, 0, 1)}
+};
+
+const int ARROW_SEGS = 14;
 const int CIRCLE_SEGMENTS = 256; // 64;
 vec3[] circleAroundY;
 vec3[] circleAroundX;
@@ -28,6 +35,15 @@ void InitCirclesAround() {
     for (int i = 0; i < 3; i++) {
         circlesAroundIsNearSide.InsertLast(array<bool>(CIRCLE_SEGMENTS));
     }
+    //--
+    if (axisDragArrows[0].Length < 10) {
+        for (int i = 0; i < 3; i++) {
+            auto snd = axisDragArrows[i][1];
+            for (float x = 0.9; x > 0.31; x -= 0.1) {
+                axisDragArrows[i].InsertLast(snd * x);
+            }
+        }
+    }
 }
 
 vec4[] circleColors = {
@@ -38,7 +54,16 @@ vec4[] circleColors = {
 
 const quat DEFAULT_QUAT = quat(0,0,0,1);
 
-class RotationGizmo {
+float clickSensitivity = 400.;
+
+namespace Gizmo {
+    enum Mode {
+        Rotation,
+        Translation
+    }
+}
+
+class RotationTranslationGizmo {
     // drawing gizmo
     // click detection
     // drag detection
@@ -47,35 +72,57 @@ class RotationGizmo {
     // clicking update
 
     // quat rot = quat(0,0,0,1);
-    mat4 rot = mat4::Rotate(0, UP);
-    mat4 tmpRot = mat4::Rotate(0, UP);
+    vec3 pos;
+    vec3 tmpPos;
+    mat4 rot = mat4::Identity();
+    mat4 tmpRot = mat4::Identity();
     string name;
+    Gizmo::Mode mode = Gizmo::Mode::Rotation;
 
-    RotationGizmo(const string &in name) {
+    float stepDist = 0.25;
+    float stepRot = PI/32.;
+
+    RotationTranslationGizmo(const string &in name) {
         this.name = name;
         if (circleAroundX.Length == 0) {
             InitCirclesAround();
         }
     }
 
-    RotationGizmo@ SetRotation(const mat4 &in r) {
+    RotationTranslationGizmo@ SetRotation(const mat4 &in r) {
         rot = r;
         return this;
     }
 
-    RotationGizmo@ AddTmpRotation(Axis axis, float delta_theta) {
-        tmpRot = tmpRot * mat4::Rotate(delta_theta, (rot * AxisToVec(axis)).xyz);
+    RotationTranslationGizmo@ AddTmpRotation(Axis axis, float delta_theta) {
+        tmpRot = tmpRot * mat4::Rotate(delta_theta, AxisToVec(axis));
         return this;
     }
 
-    RotationGizmo@ SetTmpRotation(Axis axis, float theta) {
-        tmpRot = mat4::Rotate(theta, (rot * AxisToVec(axis)).xyz);
+    RotationTranslationGizmo@ AddTmpTranslation(const vec3 &in t) {
+        tmpPos = tmpPos + t;
         return this;
     }
 
-    RotationGizmo@ ApplyTmpRotation() {
+    RotationTranslationGizmo@ SetTmpRotation(Axis axis, float theta) {
+        tmpRot = mat4::Rotate(theta, AxisToVec(axis));
+        return this;
+    }
+
+    RotationTranslationGizmo@ SetTmpTranslation(const vec3 &in t) {
+        tmpPos = t;
+        return this;
+    }
+
+    RotationTranslationGizmo@ ApplyTmpRotation() {
         rot = rot * tmpRot;
         tmpRot = mat4::Identity();
+        return this;
+    }
+
+    RotationTranslationGizmo@ ApplyTmpTranslation() {
+        pos = pos + tmpPos;
+        tmpPos = vec3();
         return this;
     }
 
@@ -96,38 +143,58 @@ class RotationGizmo {
     vec2 centerScreenPos;
     bool shouldDrawGizmo = true;
 
-    void DrawCirclesManual(vec3 pos, float scale = 1.0) {
+    bool _isCtrlDown = false;
+    bool _wasCtrlDown = false;
+    bool _ctrlPressed = false;
+
+    void DrawCirclesManual(vec3 pos, float scale = 2.0) {
         camPos = Camera::GetCurrentPosition();
         mousePos = UI::GetMousePos();
-        withTmpRot = (rot * tmpRot);
         float closestMouseDist = 1000000.;
         vec3 closestRotationPoint;
         Axis closestAxis;
-        float tmpDist;
+        withTmpRot = (rot * tmpRot);
         float c2pLen2 = (pos - camPos).LengthSquared();
-        shouldDrawGizmo = true || Camera::IsBehind(pos) || c2pLen2 < (scale * scale);
+        float c2pLen = (pos - camPos).Length();
+        shouldDrawGizmo = true || Camera::IsBehind(pos) || c2pLen < scale;
         if (!shouldDrawGizmo) {
-            if (c2pLen2 < (scale * scale)) trace('c2pLen2 < (scale * scale)');
+            if (c2pLen < scale) trace('c2pLen < scale');
             else trace('Camera::IsBehind(pos)');
             return;
         }
+
+        _wasCtrlDown = _isCtrlDown;
+        _isCtrlDown = IsCtrlDown();
+        _ctrlPressed = _wasCtrlDown != _isCtrlDown && _isCtrlDown;
+
+        float tmpDist;
         centerScreenPos = Camera::ToScreen(pos).xy;
-        int segSkip = 4; // c2pLen2 > 40. ? 4 : 2;
+        bool isRotMode = mode == Gizmo::Mode::Rotation;
+        int segSkip =  isRotMode ? 4 : 1; // c2pLen2 > 40. ? 4 : 2;
         bool isNearSide = false;
 
+        int segments = isRotMode ? CIRCLE_SEGMENTS : ARROW_SEGS;
+
+        vec2 translateRadialDir;
+        bool mouseInClickRange = lastClosestMouseDist < clickSensitivity;
+
         for (int c = 0; c < 3; c++) {
-            bool thicken = lastClosestAxis == Axis(c) && lastClosestMouseDist < 200.;
+            bool thicken = lastClosestAxis == Axis(c) && mouseInClickRange;
+            float colAdd = thicken ? 0.2 : 0.;
             nvg::Reset();
+            nvg::LineCap(nvg::LineCapType::Round);
+            nvg::LineJoin(nvg::LineCapType::Round);
             nvg::BeginPath();
             nvg::StrokeWidth(thicken ? 5 : 2);
             // nvg::Circle(mousePos, 5.);
-            auto @circle = circlesAroundXYZ[c];
+            auto @circle = isRotMode ? circlesAroundXYZ[c] : axisDragArrows[c];
             auto col = circleColors[c];
+            auto col2 = col * vec4(.67, .67, .67, .5);
             int i = 0;
             int imod;
-            worldPos = (withTmpRot * circle[i]).xyz * scale + pos;
+            worldPos = (withTmpRot * circle[i]).xyz * scale + pos + tmpPos;
             if (Math::IsNaN(worldPos.LengthSquared())) {
-                worldPos = circle[i] * scale + pos;
+                worldPos = circle[i] * scale + pos + tmpPos;
             }
             if (isMouseDown) {
                 isNearSide = circlesAroundIsNearSide[c][0];
@@ -135,19 +202,14 @@ class RotationGizmo {
                 isNearSide = (worldPos - camPos).LengthSquared() < c2pLen2;
             }
             bool wasNearSide = isNearSide;
-            nvg::StrokeColor(isNearSide ? col : col * 0.5);
+            nvg::StrokeColor((isNearSide ? col : col2) + colAdd);
             vec3 p1 = Camera::ToScreen(worldPos);
             nvg::MoveTo(p1.xy);
-            for (i = 0; i <= CIRCLE_SEGMENTS; i += 4) {
-                imod = i % CIRCLE_SEGMENTS;
-                worldPos = (withTmpRot * circle[imod]).xyz * scale + pos;
-                if (Math::IsNaN(worldPos.LengthSquared())) {
-                    trace('worldPos is NaN');
-                    trace('circle[imod]: ' + circle[imod].ToString());
-                    // trace('withTmpRot: ' + withTmpRot.ToString());
-                    // worldPos = circle[i] * scale + pos;
-                    // tmpRot = quat(0,0,0,1);
-                }
+            translateRadialDir = centerScreenPos - p1.xy;
+            for (i = 0; i <= segments; i += segSkip) {
+                imod = i % segments;
+                worldPos = (withTmpRot * circle[imod]).xyz * scale + pos + tmpPos;
+                // trace('imod: ' + imod);
                 if (isMouseDown) {
                     isNearSide = circlesAroundIsNearSide[c][imod];
                 } else {
@@ -158,28 +220,20 @@ class RotationGizmo {
                     nvg::Stroke();
                     nvg::ClosePath();
                     nvg::BeginPath();
-                    nvg::StrokeColor(isNearSide ? col : col * 0.5);
+                    nvg::StrokeColor((isNearSide ? col : col2) + colAdd);
                     nvg::MoveTo(p1.xy);
                 }
                 p1 = Camera::ToScreen(worldPos);
-                try {
-                    if (p1.z > 0) {
-                        nvg::MoveTo(p1.xy);
-                    } else {
-                        nvg::LineTo(p1.xy);
-                    }
-                } catch {
-                    trace('p1: ' + p1.ToString());
-                    trace('worldPos: ' + worldPos.ToString());
-                    trace('pos: ' + pos.ToString());
-                    // trace('withTmpRot: ' + withTmpRot.ToString());
+                if (p1.z > 0) {
+                    nvg::MoveTo(p1.xy);
+                } else {
+                    nvg::LineTo(p1.xy);
                 }
                 if (!isMouseDown && (tmpDist = (mousePos - p1.xy).LengthSquared()) <= closestMouseDist) {
                     closestMouseDist = tmpDist;
                     closestRotationPoint = worldPos;
                     closestAxis = Axis(c);
-                    radialDir = (p1.xy - lastScreenPos.xy).Normalized();
-                    // radialDir = vec2(radialDir.y, -radialDir.x);
+                    radialDir = isRotMode ? (p1.xy - lastScreenPos.xy).Normalized() : translateRadialDir.Normalized();
                 }
                 wasNearSide = isNearSide;
                 lastWorldPos = worldPos;
@@ -191,44 +245,83 @@ class RotationGizmo {
         if (!isMouseDown) {
             lastClosestAxis = closestAxis;
             lastClosestMouseDist = closestMouseDist;
-            if (IsLMBPressed()) {
+            if (IsAltDown()) {
+                // do nothing: camera inputs
+            } if (IsLMBPressed()) {
                 isMouseDown = true;
                 mouseDownStart = Time::Now;
                 mouseDownPos = mousePos;
-                // tmpRot = quat(0,0,0,1);
-                tmpRot = mat4::Identity();
+                ResetTmp();
+            } else if (UI::IsMouseClicked(UI::MouseButton::Right) && mouseInClickRange) {
+                mode = isRotMode ? Gizmo::Mode::Translation : Gizmo::Mode::Rotation;
+                ResetTmp();
             }
         } else if (!IsLMBPressed()) {
             isMouseDown = false;
             ApplyTmpRotation();
-        } else if (lastClosestMouseDist < 200.) {
-            auto dd = UI::GetMouseDragDelta(UI::MouseButton::Left, 1);
-            if (dd.LengthSquared() > 0.) {
-                auto mag = Math::Dot(dd.Normalized(), radialDir) * dd.Length() / g_screen.y * TAU;
-                trace('mag: ' + mag);
+            ApplyTmpTranslation();
+        } else if (mouseInClickRange) {
+            bool skipSetLastDD = false;
+            if (_ctrlPressed) ResetTmp();
+            dragDelta = UI::GetMouseDragDelta(UI::MouseButton::Left, 1);
+            auto ddd = dragDelta - lastDragDelta;
+            if (ddd.LengthSquared() > 0.) {
+                auto mag = Math::Dot(ddd.Normalized(), radialDir) * ddd.Length() / g_screen.y * TAU * -1.;
+                // trace('mag: ' + mag);
                 if (IsShiftDown()) mag *= 0.1;
                 if (!Math::IsNaN(mag)) {
-                    SetTmpRotation(lastClosestAxis, mag);
+                    if (isRotMode) {
+                        d = mag;
+                        if (_isCtrlDown) d = d - d % stepRot;
+                        if (d == 0.) skipSetLastDD = true;
+                        else AddTmpRotation(lastClosestAxis, d);
+                    } else {
+                        d = mag * c2pLen * 0.2;
+                        if (_isCtrlDown) d = d - d % stepDist;
+                        if (d == 0.) skipSetLastDD = true;
+                        else AddTmpTranslation((rot * AxisToVec(lastClosestAxis)).xyz * d * (lastClosestAxis == Axis::Y ? 1 : -1));
+                    }
+                    // SetTmpRotation(lastClosestAxis, mag);
                     // trace('lastClosestAxis: ' + tostring(lastClosestAxis) + '; dd: ' + ((dd.x + dd.y) / g_screen.y * TAU));
                     // trace('mag: ' + mag);
+                } else {
+                    // warn('mag is NaN');
                 }
-                DrawRadialLine();
             }
+            DrawRadialLine();
+            if (!skipSetLastDD) lastDragDelta = dragDelta;
         }
+    }
+
+    void ResetTmp() {
+        tmpRot = mat4::Identity();
+        tmpPos = vec3();
+        lastDragDelta = vec2();
     }
 
     void DrawRadialLine() {
         nvg::Reset();
         nvg::BeginPath();
-        nvg::StrokeColor(vec4(1, 1, 1, 1));
+        // nvg::StrokeColor(vec4(1, 1, 1, 1));
         nvg::StrokeWidth(2);
-        nvg::MoveTo(mouseDownPos - radialDir * 10000.);
-        nvg::LineTo(mouseDownPos + radialDir * 10000.);
+        vec2 start = mouseDownPos - radialDir * g_screen.y * .5;
+        vec2 end = mouseDownPos + radialDir * g_screen.y * .5;
+        nvg::MoveTo(start);
+        nvg::LineTo(mouseDownPos);
+        nvg::StrokePaint(nvg::LinearGradient(start, mouseDownPos, vec4(1, 1, 1, 0), vec4(1, 1, 1, 1)));
+        nvg::Stroke();
+        nvg::ClosePath();
+        nvg::BeginPath();
+        nvg::MoveTo(mouseDownPos);
+        nvg::LineTo(end);
+        nvg::StrokePaint(nvg::LinearGradient(end, mouseDownPos, vec4(1, 1, 1, 0), vec4(1, 1, 1, 1)));
         nvg::Stroke();
         nvg::ClosePath();
     }
 
-    vec3 pos;
+    vec2 dragDelta;
+    vec2 lastDragDelta;
+
     vec3 camPos;
     vec4 pwrPos;
     mat4 camTranslate;
@@ -238,14 +331,12 @@ class RotationGizmo {
     mat4 camProj;
 
     void DrawAll() {
-
-        // pos = (camTR * (BACKWARD * 10.)).xyz;
         auto cam = Camera::GetCurrent();
         if (cam is null) return;
         auto camLoc = mat4(cam.Location);
         camPos = vec3(camLoc.tx, camLoc.ty, camLoc.tz);
-        float c_scale = 10.;
 
+#if DEV
         if (pos.LengthSquared() == 0) {
             pos = camPos - vec3(4.);
             try {
@@ -253,24 +344,10 @@ class RotationGizmo {
                 pos = editor.OrbitalCameraControl.m_TargetedPosition;
             } catch {}
         }
+#endif
 
         DrawCirclesManual(pos);
         DrawWindow();
-
-
-		camTranslate = mat4::Translate(camPos);
-		camRotation = mat4::Inverse(mat4::Inverse(camTranslate) * mat4(camLoc));
-        camTR = (camTranslate * camRotation);
-        camPersp = mat4::Perspective(cam.Fov, cam.Width_Height, cam.NearZ, cam.FarZ);
-        camProj = camPersp * mat4::Inverse(camTR);
-
-
-
-        // DrawProjectedCircle(pos, rot, c_scale);
-        // DrawProjectedCircle(pos, rot * ROT_Q_AROUND_UP, c_scale);
-        // DrawProjectedCircle(pos, rot * ROT_Q_AROUND_FWD, c_scale);
-
-        pwrPos = vec4(pwr.tx, pwr.ty, pwr.tz, pwr.tw);
     }
 
     void DrawWindow() {
@@ -286,6 +363,9 @@ class RotationGizmo {
             UI::Text("last closest axis: " + tostring(lastClosestAxis));
             UI::Text("last closest mouse dist: " + lastClosestMouseDist);
             UI::Text("isMouseDown: " + isMouseDown);
+            UI::Text("IsShiftDown(): " + IsShiftDown());
+            UI::Text("IsCtrlDown(): " + IsCtrlDown());
+            UI::Text("IsAltDown(): " + IsAltDown());
             // UI::Text("rot: " + rot.ToString());
             // UI::Text("tmpRot: " + tmpRot.ToString());
             // UI::Text("withTmpRot: " + withTmpRot.ToString());
@@ -296,38 +376,7 @@ class RotationGizmo {
         // UX::PopInvisibleWindowStyle();
     }
 
-    mat4 qRot = mat4::Identity();
-    mat4 wr = mat4::Identity();
-    mat4 pwr = mat4::Identity();
-    vec3 screenPos = vec3();
-    vec3 rrt;
     float d;
-
-    void DrawProjectedCircle(vec3 &in pos, quat&in rot, float scale = 1.0) {
-        // Mat4_GetEllipseData
-        // world -> translate only
-        // local -> rotate only
-        auto cam = Camera::GetCurrent();
-        d = (Camera::GetCurrentPosition() - pos).Length();
-        auto persp = mat4::Perspective(cam.Fov, cam.Width_Height, cam.NearZ, cam.FarZ);
-        qRot = mat4::Rotate(rot.Angle(), rot.Axis());
-        pwr = camProj * mat4::Inverse(qRot);
-        // wr = mat4::Translate(pos) * qRot;
-        // pwr = persp * wr;
-        screenPos = Camera::ToScreen(pos);
-        Mat4_GetEllipseData(pwr, rrt, scale / d * 100.);
-        nvg::Reset();
-        nvg::BeginPath();
-        nvg::StrokeColor(vec4(1, 1, 1, 1));
-        nvg::StrokeWidth(2);
-        // nvg::Ellipse(screenPos.xy, rrt.x, rrt.y);
-        // nvg::Circle(screenPos.xy, rrt.x * .5);
-        nvg::Translate(screenPos.xy);
-        nvg::Rotate(rrt.z);
-        nvg::Ellipse(vec2(), rrt.x, rrt.y);
-        nvg::Stroke();
-        nvg::ClosePath();
-    }
 }
 
 const quat ROT_Q_AROUND_UP = quat(UP, HALF_PI);

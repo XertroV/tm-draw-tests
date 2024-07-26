@@ -14,8 +14,8 @@ void RenderMenu() {
 
 void Render() {
 
-    if (testGizmo is null) @testGizmo = RotationGizmo("test");
-    testGizmo.DrawAll();
+    // if (testGizmo is null) @testGizmo = RotationTranslationGizmo("test");
+    // testGizmo.DrawAll();
 
     // RenderFireworkTest();
     if (!g_Window || root is null) return;
@@ -54,6 +54,12 @@ void Main() {
     // startnew(RunFindBlocks);
     InitNodeGraphStuff();
     // startnew(RunJsonBenchmarks);
+
+//     CMwCmdBufferCore@ cmdBuffer = CMwCmdBufferCore();
+//     auto vtablePtr = Dev::GetOffsetUint64(cmdBuffer, 0x0);
+//     trace("vtablePtr: " + Text::FormatPointer(vtablePtr));
+//     IO::SetClipboard(Text::FormatPointer(vtablePtr));
+//     UI::ShowNotification("copied vtablePtr: " + Text::FormatPointer(vtablePtr));
 }
 
 
@@ -80,9 +86,38 @@ bool IsLMBPressed() {
     return UI::IsMouseDown(UI::MouseButton::Left);
 }
 
+bool IsRMBPressed() {
+    return UI::IsMouseDown(UI::MouseButton::Right);
+}
+
 bool IsShiftDown() {
     // return (Time::Now / 1000) % 2 == 0;
-    return false;
+    return g_shiftDown;
+}
+
+bool IsCtrlDown() {
+    return g_ctrlDown;
+}
+
+bool IsAltDown() {
+    return g_altDown;
+}
+
+bool g_shiftDown = false;
+bool g_ctrlDown = false;
+bool g_altDown = false;
+
+/** Called whenever a key is pressed on the keyboard. See the documentation for the [`VirtualKey` enum](https://openplanet.dev/docs/api/global/VirtualKey).
+*/
+UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
+    if (key == VirtualKey::Shift) {
+        g_shiftDown = down;
+    } else if (key == VirtualKey::Control) {
+        g_ctrlDown = down;
+    } else if (key == VirtualKey::Menu) {
+        g_altDown = down;
+    }
+    return UI::InputBlocking::DoNothing;
 }
 
 void RunJsonBenchmarks() {
