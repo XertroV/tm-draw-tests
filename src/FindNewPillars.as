@@ -1,3 +1,5 @@
+#if FALSE
+
 void RunFindBlocks() {
     // RunFindNewPillars
     // RunFindPlatformBlocks();
@@ -82,3 +84,5 @@ void LogMatMod(CPlugGameSkinAndFolder@ matmod, uint i) {
         print("Found new matmod: " + path + " | " + matmod.Id.GetName() + " (index: " + i + ")");
     }
 }
+
+#endif

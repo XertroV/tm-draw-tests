@@ -48,3 +48,12 @@ string Mat4ToStr(const mat4 &in m) {
     str += "  " + tmp.ToString() + " >";
     return str;
 }
+
+string NodToStr(ReferencedNod@ nod) {
+    if (nod is null) return "null";
+    return nod.TypeName + " @ " + Text::FormatPointer(nod.ptr);
+}
+
+string ArrayOfStrToStr(string[]@ arr) {
+    return Json::Write(arr.ToJson());
+}

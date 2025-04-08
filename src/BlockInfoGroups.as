@@ -1,3 +1,5 @@
+#if FALSE
+
 namespace BlockInfoGroups {
     void Run() {
         auto app = GetApp();
@@ -169,7 +171,7 @@ enum PillarsType {
 
 
 
-
+#endif
 
 
 
@@ -209,4 +211,40 @@ uint16 GetOffset(CMwNod@ obj, const string &in memberName) {
     if (memberTy is null) throw(ty.Name + " does not have a child called " + memberName);
     if (memberTy.Offset == 0xFFFF) throw("Invalid offset: 0xFFFF");
     return memberTy.Offset;
+}
+
+
+
+uint64 Dev_GetPointerForNod(CMwNod@ nod) {
+    if (NodPtrs::g_TmpPtrSpace == 0) {
+        NodPtrs::InitializeTmpPointer();
+    }
+    if (nod is null) return 0;
+    Dev::SetOffset(NodPtrs::g_TmpSpaceAsNod, 0, nod);
+    return Dev::GetOffsetUint64(NodPtrs::g_TmpSpaceAsNod, 0);
+}
+
+
+namespace NodPtrs {
+    void InitializeTmpPointer() {
+        if (g_TmpPtrSpace != 0) return;
+        g_TmpPtrSpace = Dev::Allocate(0x1000);
+        auto nod = CMwNod();
+        uint64 tmp = Dev::GetOffsetUint64(nod, 0);
+        Dev::SetOffset(nod, 0, g_TmpPtrSpace);
+        @g_TmpSpaceAsNod = Dev::GetOffsetNod(nod, 0);
+        Dev::SetOffset(nod, 0, tmp);
+    }
+
+    uint64 g_TmpPtrSpace = 0;
+    CMwNod@ g_TmpSpaceAsNod = null;
+
+    void Cleanup() {
+        warn("NodPtrs::Cleanup");
+        @g_TmpSpaceAsNod = null;
+        if (g_TmpPtrSpace != 0) {
+            g_TmpPtrSpace = 0;
+            Dev::Free(g_TmpPtrSpace);
+        }
+    }
 }

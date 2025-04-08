@@ -1,3 +1,5 @@
+#if FALSE
+
 bool g_DrawFireworks;
 
 void RenderFireworkTest() {
@@ -180,3 +182,6 @@ vec2 Vec2CosSin(float theta) {
 }
 
 FireworkParticle@[] testFWParticles;
+
+
+#endif

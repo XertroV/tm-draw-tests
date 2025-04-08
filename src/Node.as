@@ -15,6 +15,7 @@ namespace NG {
         Vec4,
         Mat3,
         Mat4,
+        Nod,
     }
 
     interface Operation {
@@ -162,6 +163,7 @@ namespace NG {
                 case DataTypes::Vec4: WriteVec4(socket.GetVec4()); break;
                 case DataTypes::Mat3: WriteMat3(socket.GetMat3()); break;
                 case DataTypes::Mat4: WriteMat4(socket.GetMat4()); break;
+                case DataTypes::Nod: WriteNod(socket.GetNod()); break;
                 default: throw("unknown data type: " + tostring(dataTy));
             }
         }
@@ -181,6 +183,7 @@ namespace NG {
                 case DataTypes::Vec4: return GetVec4().ToString();
                 case DataTypes::Mat3: return Mat3ToStr(GetMat3());
                 case DataTypes::Mat4: return Mat4ToStr(GetMat4());
+                case DataTypes::Nod: return NodToStr(GetNod());
                 default: throw("unknown data type: " + tostring(dataTy));
             }
             return "?";
@@ -206,6 +209,8 @@ namespace NG {
         void WriteMat3(const mat3 &in value) { throw("Socket::WriteMat3: no implementation"); }
         mat4 GetMat4() { throw("Socket::GetMat4: no implementation"); return mat4(); }
         void WriteMat4(const mat4 &in value) { throw("Socket::WriteMat4: no implementation"); }
+        ReferencedNod@ GetNod() { throw("Socket::GetNod: no implementation"); return null; }
+        void WriteNod(ReferencedNod@ n) { throw("Socket::WriteNod: no implementation"); }
 
         const float[]@ GetFloatArray() {
             throw("Socket::GetFloatArray: no implementation");
@@ -220,6 +225,10 @@ namespace NG {
 
         vec2 textSize;
 
+        string GetMainLabel() {
+            return name.Length > 0 ? name + " = " + GetValueString() : GetValueString();
+        }
+
         void UIDraw(UI::DrawList@ dl, vec2 startCur, vec2 startPos, vec2 pos) {
             this.pos = pos;
             vec2 size = vec2(10.);
@@ -229,8 +238,7 @@ namespace NG {
             bool clicked = UI::IsItemClicked();
             dl.AddCircleFilled(startPos + pos, size.x / 2., cWhite, 12);
             bool alignRight = IsOutput;
-            string label;
-            label = name + " = " + GetValueString();
+            string label = GetMainLabel();
             textSize = Draw::MeasureString(label, g_NormFont, 16.);
             auto yOff = size.y / 2. + 3.;
             if (alignRight) {
@@ -260,11 +268,19 @@ namespace NG {
         int64 value;
         int64[] values;
         int64 _default;
+        bool RenderIntAsPtr = false;
 
         IntSocket(SocketType ty, Node@ parent, const string &in name = "", int64 _default = 0) {
             super(ty, parent, DataTypes::Int);
             this._default = _default;
             SetName(name);
+        }
+
+        string GetValueString() override {
+            if (RenderIntAsPtr) {
+                return Text::FormatPointer(value);
+            }
+            return Socket::GetValueString();
         }
 
         void ResetValue() override {
@@ -828,6 +844,22 @@ namespace NG {
             // Write the value to the output
             if (index < outputs.Length && outputs[index] !is null) {
                 outputs[index].WriteMat4(value);
+                outputs[index].SignalUpdated();
+            }
+        }
+
+        ReferencedNod@ GetNod(int index) {
+            // Read the value from the input
+            if (index < inputs.Length && inputs[index] !is null) {
+                return inputs[index].GetNod();
+            }
+            return null;
+        }
+
+        void WriteNod(int index, ReferencedNod@ n) {
+            // Write the value to the output
+            if (index < outputs.Length && outputs[index] !is null) {
+                outputs[index].WriteNod(n);
                 outputs[index].SignalUpdated();
             }
         }
@@ -1634,6 +1666,10 @@ namespace NG {
         //     @node = Mat3Value().FromJson(j);
         // } else if (type == "Mat4Value") {
         //     @node = Mat4Value().FromJson(j);
+        } else if (type == "NodFromFileNode") {
+            @node = NodFromFileNode().FromJson(j);
+        } else if (type == "NodPtrNode") {
+            @node = NodPtrNode().FromJson(j);
         } else {
             warn("Unknown node type: " + type);
         }

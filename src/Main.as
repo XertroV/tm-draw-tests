@@ -46,6 +46,7 @@ void Update(float dt) {
 */
 void OnDestroyed() {
     if (g_GraphTab !is null) g_GraphTab.SaveGraph();
+    NodPtrs::Cleanup();
 }
 
 
@@ -53,6 +54,8 @@ TabGroup@ root;
 NG::GraphTab@ g_GraphTab;
 
 void Main() {
+    // print("Path split: /test\\234/a/lskdjf.map.gbx: " + ArrayOfStrToStr(SplitPath("/test\\234/a/lskdjf.map.gbx")));
+
     // startnew(RunFireworksTest);
     // RunSaveMapFromReplayTest();
     // BlockInfoGroups::Run();

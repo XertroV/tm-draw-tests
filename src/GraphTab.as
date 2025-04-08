@@ -292,6 +292,15 @@ namespace NG {
                     }
                     UI::EndMenu();
                 }
+                if (UI::BeginMenu("Add Nod Node")) {
+                    if (UI::MenuItem("Nod From File")) {
+                        AddNode(NodFromFileNode());
+                    }
+                    if (UI::MenuItem("Nod Ptr")) {
+                        AddNode(NodPtrNode());
+                    }
+                    UI::EndMenu();
+                }
                 UI::EndPopup();
             }
         }

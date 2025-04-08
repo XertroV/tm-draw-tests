@@ -1,19 +1,21 @@
+#if FALSE
+
 uint64 g_ResultVtable = 0;
 
-void TestHandleCrash() {
-    print("\\$8f8\\$i - Create nods");
-    CPlugStaticObjectModel@ dyna = CPlugStaticObjectModel();
-    CPlugSolid2Model@ mesh = CPlugSolid2Model();
-    CPlugSurface@ surf = CPlugSurface();
-    print("\\$8f8\\$i - set mesh");
-    @dyna.Mesh = mesh;
-    print("\\$8f8\\$i - set static surf");
-    @dyna.Shape = surf;
-    print("\\$8f8\\$i - done");
-}
+// void TestHandleCrash() {
+//     print("\\$8f8\\$i - Create nods");
+//     CPlugStaticObjectModel@ dyna = CPlugStaticObjectModel();
+//     CPlugSolid2Model@ mesh = CPlugSolid2Model();
+//     CPlugSurface@ surf = CPlugSurface();
+//     print("\\$8f8\\$i - set mesh");
+//     @dyna.Mesh = mesh;
+//     print("\\$8f8\\$i - set static surf");
+//     @dyna.Shape = surf;
+//     print("\\$8f8\\$i - done");
+// }
 
 void ExtractGhosts() {
-    TestHandleCrash();
+    // TestHandleCrash();
 
     auto app = GetApp();
     if (g_ResultVtable == 0) {
@@ -168,3 +170,5 @@ class GhostData {
 }
 
 Meta::PluginCoroutine@ _extractGhosts = startnew(ExtractGhosts);
+
+#endif
