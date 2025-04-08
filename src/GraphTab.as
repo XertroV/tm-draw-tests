@@ -1,5 +1,7 @@
 namespace NG {
     vec2 nodeGraphMousePos;
+    vec2 rClickPos;
+
     class GraphTab : EffectTab {
         GraphTab(TabGroup@ p) {
             super(p, "Node Graph", Icons::Cube + Icons::SignIn + Icons::Sitemap + Icons::SignOut + Icons::Cubes);
@@ -24,7 +26,7 @@ namespace NG {
             nodes[2].pos = vec2(220, 200);
             cast<MathOp>(nodes[2]).op = eMathOps::Divide;
             nodes[3].pos = vec2(420, 200);
-            cast<MathFunc>(nodes[3]).func = eMathFunc::Sin;
+            cast<MathFunc>(nodes[3]).func = eMathFunc1::Sin;
         }
 
 
@@ -98,7 +100,7 @@ namespace NG {
             nodes.InsertLast(n);
             @n.graph = this;
             if (isNew) {
-                n.pos = nodeGraphMousePos;
+                n.pos = rClickPos;
                 saveSoonReqAt = Time::Now;
             }
         }
@@ -218,37 +220,75 @@ namespace NG {
         }
 
         void DrawRightClickMenu() {
+            if (UI::IsMouseClicked(UI::MouseButton::Right)) {
+                rClickPos = nodeGraphMousePos;
+            }
             if (UI::BeginPopupContextItem(idNonce + "rc")) {
                 if (UI::BeginMenu("Add Value")) {
-                    if (UI::MenuItem("Int Value")) {
+                    if (UI::MenuItem("Int")) {
                         AddNode(IntValue());
                     }
-                    if (UI::MenuItem("Float Value")) {
+                    if (UI::MenuItem("Float")) {
                         AddNode(FloatValue());
                     }
-                    if (UI::MenuItem("Time Value")) {
+                    if (UI::MenuItem("Time")) {
                         AddNode(TimeValue());
                     }
+                    if (UI::MenuItem("String")) {
+                        AddNode(StringValue());
+                    }
+                    if (UI::MenuItem("Vec2")) {
+                        AddNode(Vec2Value());
+                    }
+                    if (UI::MenuItem("Vec3")) {
+                        AddNode(Vec3Value());
+                    }
+                    if (UI::MenuItem("Vec4")) {
+                        AddNode(Vec4Value());
+                    }
+                    // if (UI::MenuItem("Mat3")) {
+                    //     AddNode(Mat3Value());
+                    // }
+                    // if (UI::MenuItem("Mat4")) {
+                    //     AddNode(Mat4Value());
+                    // }
                     UI::EndMenu();
                 }
                 if (UI::BeginMenu("Add Math")) {
-                    if (UI::MenuItem("Scalar Op")) {
+                    if (UI::MenuItem("Scalar Op2")) {
                         AddNode(MathOp());
                     }
+                    AddIndentedTooltip("Operations with 2 numbers.\nExamples: a - b, a * b, a ^ b, log(a, b), min(a, b), etc.", w: 20.0);
+
                     if (UI::MenuItem("Scalar Func (1)")) {
                         AddNode(MathFunc());
                     }
-                    // if (UI::MenuItem("Scalar Func (2)")) {
-                    //     AddNode(MathFunc2());
-                    // }
-                    // if (UI::MenuItem("Scalar Func (3)")) {
-                    //     AddNode(MathFunc3());
-                    // }
+                    AddIndentedTooltip("Functions with 1 argument.\nExamples: sin(a), acos(a), sqrt(a), ln(a), round(a), toDeg(a), etc.", w: 20.0);
+
+                    if (UI::MenuItem("Scalar Func (2)")) {
+                        AddNode(MathFunc2());
+                    }
+                    AddIndentedTooltip("Functions with 2 arguments.\nExamples: atan2(a, b), pow(a, b), etc.", w: 20.0);
+
+                    if (UI::MenuItem("Scalar Func (3)")) {
+                        AddNode(MathFunc3());
+                    }
+                    AddIndentedTooltip("Functions with 3 arguments.\nExamples: clamp(x, min, max), lerp(min, max, t), etc.", w: 20.0);
+
                     UI::EndMenu();
                 }
                 if (UI::BeginMenu("Add Visualizer")) {
-                    if (UI::MenuItem("Plot (x,y)")) {
-                        AddNode(PlotNode());
+                    if (UI::MenuItem("Plot vs Time")) {
+                        AddNode(PlotVsTimeNode());
+                    }
+                    UI::EndMenu();
+                }
+                if (UI::BeginMenu("Add Json")) {
+                    if (UI::MenuItem("Json::Parse")) {
+                        AddNode(JsonParseObj());
+                    }
+                    if (UI::MenuItem("Get Key")) {
+                        AddNode(JsonGetKey());
                     }
                     UI::EndMenu();
                 }

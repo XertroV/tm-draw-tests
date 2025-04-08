@@ -2,7 +2,7 @@ namespace NG {
     enum PlotNodeXTy {
         Frames = 1, Index = 2 // Time = 3,
     }
-    class PlotNode : Node {
+    class PlotVsTimeNode : Node {
         vec2 axisScale = vec2(-1);
         vec2 bl = vec2(0.0);
         protected vec2 pxSize = vec2(180.0, 150.);
@@ -12,9 +12,10 @@ namespace NG {
         int valuesCapacity = 180;
         int nextIx = 0;
 
-        PlotNode() {
-            super("Plot");
-            inputs = {FloatSocket(SocketType::Input, this, "y")};
+        PlotVsTimeNode() {
+            super("Plot/Time");
+            inputs = { FloatSocket(SocketType::Input, this, "y")
+                     };
             ResetValues();
         }
 
@@ -80,7 +81,7 @@ namespace NG {
 
         Json::Value@ ToJson() override {
             Json::Value@ j = Node::ToJson();
-            j['type'] = "PlotNode";
+            j['type'] = "PlotOverTimeNode";
             j['scale.x'] = axisScale.x;
             j['scale.y'] = axisScale.y;
             j['bl.x'] = bl.x;

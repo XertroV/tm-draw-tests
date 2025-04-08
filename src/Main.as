@@ -17,11 +17,11 @@ void Render() {
     // if (testGizmo is null) @testGizmo = RotationTranslationGizmo("test");
     // testGizmo.DrawAll();
 
-    mat4 m = mat4::Translate(vec3(764, 140, 764)) * mat4::Scale(vec3(32, 8, 32));
-    auto faceOrder = getCubeFaceBackToFront(m);
-    for (uint i = 0; i < 6; i++) {
-        drawCubeFace(m, faceOrder[i]);
-    }
+    // mat4 m = mat4::Translate(vec3(764, 140, 764)) * mat4::Scale(vec3(32, 8, 32));
+    // auto faceOrder = getCubeFaceBackToFront(m);
+    // for (uint i = 0; i < 6; i++) {
+    //     drawCubeFace(m, faceOrder[i]);
+    // }
 
     // RenderFireworkTest();
     if (!g_Window || root is null) return;
@@ -202,3 +202,62 @@ void LoadFonts() {
     @g_MidFont = UI::LoadFont("DroidSans.ttf", 20);
     @g_NormFont = UI::LoadFont("DroidSans.ttf", 16);
 }
+
+
+
+void AddSimpleTooltip(const string &in msg, bool pushFont = false) {
+    if (UI::IsItemHovered()) {
+        if (pushFont) UI::PushFont(g_NormFont);
+        UI::SetNextWindowSize(400, 0, UI::Cond::Appearing);
+        UI::BeginTooltip();
+        UI::TextWrapped(msg);
+        UI::EndTooltip();
+        if (pushFont) UI::PopFont();
+    }
+}
+
+void AddIndentedTooltip(const string &in msg, bool pushFont = false, float w = -1.0) {
+    if (UI::IsItemHovered()) {
+        if (pushFont) UI::PushFont(g_NormFont);
+        UI::SetNextWindowSize(400, 0, UI::Cond::Appearing);
+        UI::BeginTooltip();
+        UI::Indent(w);
+        UI::TextWrapped(msg);
+        UI::Unindent(w);
+        UI::EndTooltip();
+        if (pushFont) UI::PopFont();
+    }
+}
+
+// void AddHoverRight(const string &in msg, float maxWidth = 300.0) {
+//     if (!UI::IsItemHovered()) return;
+//     auto rect = UI::GetItemRect();
+//     auto windowPos = UI::GetWindowPos();
+//     auto scrollPos = vec2(UI::GetScrollX(), UI::GetScrollY());
+//     auto pos = UI::GetCursorPos();
+//     UI::SameLine();
+//     UI::TextWrapped(msg);
+//     return;
+//     auto rightPos = UI::GetCursorPos();
+//     UI::SetCursorPos(vec2(pos.x, rightPos.y));
+//     UI::SetNextItemOpen(true, UI::Cond::Always);
+//     if (UI::BeginMenu("##hoverRightMenu", true)) {
+//         UI::TextWrapped(msg);
+//         UI::EndMenu();
+//     }
+//     UI::SetCursorPos(pos);
+//     // rightPos.x = rect.x + rect.z;
+//     // rightPos.y = rect.y;
+//     // auto cardPos = rightPos + vec2(rect.z + 20, 0);
+//     // UI::SetNextWindowPos(cardPos.x, cardPos.y, UI::Cond::Appearing);
+//     // UI::SetNextWindowSize(maxWidth, 0, UI::Cond::Appearing);
+//     // if (UI::Begin("##hoverRight", UI::WindowFlags::NoTitleBar | UI::WindowFlags::NoResize | UI::WindowFlags::NoMove | UI::WindowFlags::NoCollapse | UI::WindowFlags::NoSavedSettings | UI::WindowFlags::AlwaysAutoResize)) {
+//     //     UI::TextWrapped(msg);
+//     //     UI::TextWrapped("windowPos: " + windowPos.ToString());
+//     //     UI::TextWrapped("scrollPos: " + scrollPos.ToString());
+//     //     UI::TextWrapped("pos: " + pos.ToString());
+//     //     UI::TextWrapped("rightPos: " + rightPos.ToString());
+//     //     UI::TextWrapped("cardPos: " + cardPos.ToString());
+//     // }
+//     // UI::End();
+// }

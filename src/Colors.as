@@ -10,6 +10,7 @@ const vec4 cSkyBlue25 = vec4(0, .5, 1, .25);
 const vec4 cRed =   vec4(1, 0, 0, 1);
 const vec4 cRed25 =   vec4(1, 0, 0, .25);
 const vec4 cOrange = vec4(1, .4, .05, 1);
+const vec4 cOrangeA50 = vec4(1, .4, .05, .5);
 const vec4 cBlack =  vec4(0,0,0, 1);
 const vec4 cBlack75 =  vec4(0,0,0, .75);
 const vec4 cBlack50 =  vec4(0,0,0, .50);
