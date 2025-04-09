@@ -299,6 +299,12 @@ namespace NG {
                     if (UI::MenuItem("Nod Ptr")) {
                         AddNode(NodPtrNode());
                     }
+                    if (UI::BeginMenu("Get Property")) {
+                        if (UI::MenuItem("Nod")) {
+                            AddNode(GetPropertyNod());
+                        }
+                        UI::EndMenu();
+                    }
                     UI::EndMenu();
                 }
                 UI::EndPopup();

@@ -1620,11 +1620,8 @@ namespace NG {
         }
 
         Json::Value@ ToJson() override {
-            trace('time val to json start');
             Json::Value@ j = Node::ToJson();
-            trace('time val to json mid');
             j["type"] = "TimeValue";
-            trace('time val to json done');
             return j;
         }
     }
@@ -1670,6 +1667,8 @@ namespace NG {
             @node = NodFromFileNode().FromJson(j);
         } else if (type == "NodPtrNode") {
             @node = NodPtrNode().FromJson(j);
+        } else if (type == "GetPropertyNod") {
+            @node = GetPropertyNod().FromJson(j);
         } else {
             warn("Unknown node type: " + type);
         }

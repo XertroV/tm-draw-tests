@@ -1,4 +1,6 @@
 namespace NG {
+    // MARK: Sockets
+
     class NodSocket : Socket {
         private ReferencedNod@ nod;
 
@@ -30,6 +32,103 @@ namespace NG {
         }
     }
 
+
+    class TypedNodSocket : Socket {
+        string[]@ allowedClasses;
+
+        TypedNodSocket(SocketType ty, Node@ parent, string[]@ allowedClasses, const string &in name = "") {
+            super(ty, parent, DataTypes::Nod);
+            @this.allowedClasses = allowedClasses;
+            if (allowedClasses.Length == 0) {
+                throw("TypedNodSocket: allowedClasses is empty");
+            }
+            SetName(name);
+        }
+
+        void WriteNod(ReferencedNod@ n) override {
+            if (n is null) {
+                Socket::WriteNod(n);
+                return;
+            }
+            if (TestNodClass(n)) {
+                Socket::WriteNod(n);
+            } else {
+                throw("Invalid type: " + n.TypeName + "; expected: " + ArrayOfStrToStr(allowedClasses));
+            }
+        }
+
+        bool TestNodClass(ReferencedNod@ n) {
+            if (n is null || n.nod is null || n.TypeName.Length == 0) return false;
+            return allowedClasses.FindByRef(n.TypeName) >= 0;
+        }
+    }
+
+    // MARK: GetPropertyNod
+
+    class GetPropertyNod : Node {
+        string propertyName;
+        ReferencedNod@ lastNod;
+
+        GetPropertyNod() {
+            super("Get Property");
+            inputs = {NodSocket(SocketType::Input, this, "Nod")};
+            outputs = {NodSocket(SocketType::Output, this, "Property")};
+        }
+
+        Node@ FromJson(Json::Value@ j) override {
+            propertyName = j.Get("propName", "");
+            Node::FromJson(j);
+            return this;
+        }
+
+        Json::Value@ ToJson() override {
+            Json::Value@ j = Node::ToJson();
+            j["type"] = "GetPropertyNod";
+            j["propName"] = propertyName;
+            return j;
+        }
+
+        void Update() override {
+            errorStr = "";
+            try {
+                auto nod = GetNod(0);
+                if (nod is null) throw("\\$inull");
+                @lastNod = nod;
+                auto prop = nod.GetPNod(propertyName);
+                if (prop is null) throw("\\$iproperty is null");
+                auto propRN = ReferencedNod(prop);
+                WriteNod(0, propRN);
+                outputs[0].SetName(propRN.TypeName);
+            } catch {
+                errorStr = getExceptionInfo();
+                WriteNod(0, null);
+                outputs[0].SetName("\\$inull / err");
+            }
+        }
+
+        vec2 GetParamsSize() override {
+            return vec2(100., ioHeight);
+        }
+
+        float UIDrawParams(UI::DrawList@ dl, vec2 startCur, vec2 startPos, vec2 pos, float width) override {
+            vec2 cur = startCur + pos + vec2(8., 0.);
+            UI::PushID(id);
+
+            UI::SetCursorPos(cur);
+            UI::SetNextItemWidth(width - 16.);
+            auto prevName = propertyName;
+            propertyName = UI::InputText("##propName", propertyName);
+            if (propertyName != prevName) {
+                Update();
+            }
+
+            UI::PopID();
+            return ioHeight;
+        }
+    }
+
+
+    // MARK: NodPtrNode
 
     class NodPtrNode : Node {
         uint64 ptr;
@@ -88,6 +187,7 @@ namespace NG {
         }
     }
 
+    // MARK: NodFromFile
 
     enum FidDrive {
         User, Game, Fake, ProgramData, Resource
@@ -175,6 +275,8 @@ namespace NG {
             return ioHeight * 2;
         }
     }
+
+    // MARK: FID Funcs
 
     CSystemFidsFolder@ GetDriveRoot(FidDrive drive) {
         switch (drive) {
