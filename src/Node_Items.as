@@ -70,7 +70,7 @@ namespace NG {
         ReferencedNod@ lastNod;
 
         GetPropertyNod() {
-            super("Get Property");
+            super("Get Nod");
             inputs = {NodSocket(SocketType::Input, this, "Nod")};
             outputs = {NodSocket(SocketType::Output, this, "Property")};
         }
@@ -180,6 +180,13 @@ namespace NG {
             if (UI::Button("Copy Ptr")) {
                 IO::SetClipboard(Text::FormatPointer(ptr));
                 UI::ShowNotification("Copied ptr: " + Text::FormatPointer(ptr), 5000);
+            }
+            UI::SameLine();
+            if (UI::Button(Icons::Cube)) {
+                auto nod = GetNod(0);
+                if (nod !is null) {
+                    ExploreNod(nod.TypeName, nod.nod);
+                }
             }
 
             UI::PopID();

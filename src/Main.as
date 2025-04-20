@@ -10,9 +10,13 @@ void RenderMenu() {
     if (UI::MenuItem(MenuTitle, "", g_Window)) {
         g_Window = !g_Window;
     }
+    if (UI::MenuItem("g_RunDipsItemExp", "", g_RunDipsItemExp)) {
+        g_RunDipsItemExp = !g_RunDipsItemExp;
+    }
 }
 
 void Render() {
+    Render_DipsItemExperiment();
 
     // if (testGizmo is null) @testGizmo = RotationTranslationGizmo("test");
     // testGizmo.DrawAll();
@@ -34,6 +38,7 @@ void Render() {
 float _PluginLoadTime = Time::Now;
 float g_TimeMs = _PluginLoadTime;
 float g_DT;
+float g_LastGcDt, g_LastGcDt2, g_LastGcDt3;
 vec2 g_screen = vec2(2000);
 void Update(float dt) {
     g_DT = dt;
@@ -47,6 +52,7 @@ void Update(float dt) {
 void OnDestroyed() {
     if (g_GraphTab !is null) g_GraphTab.SaveGraph();
     NodPtrs::Cleanup();
+    CheckUnhookAllRegisteredHooks();
 }
 
 
@@ -54,6 +60,8 @@ TabGroup@ root;
 NG::GraphTab@ g_GraphTab;
 
 void Main() {
+    startnew(DipsItemExperiment).WithRunContext(Meta::RunContext::AfterMainLoop);
+    // startnew(TryExtractNewItem);
     // print("Path split: /test\\234/a/lskdjf.map.gbx: " + ArrayOfStrToStr(SplitPath("/test\\234/a/lskdjf.map.gbx")));
 
     // startnew(RunFireworksTest);
@@ -70,7 +78,6 @@ void Main() {
 //     IO::SetClipboard(Text::FormatPointer(vtablePtr));
 //     UI::ShowNotification("copied vtablePtr: " + Text::FormatPointer(vtablePtr));
 }
-
 
 void InitNodeGraphStuff() {
     startnew(LoadFonts);

@@ -106,7 +106,7 @@ class ReferencedNod {
     // Get stuff from the nod
     CMwNod@ GetPNod(const string &in propName) {
         if (nod is null) return null;
-        auto o = GetOffset(TypeName, propName);
+        uint16 o = GetOffset(TypeName, propName);
         if (o == 0xFFFF) return null;
         // auto p = Dev::GetOffsetUint64(nod, o);
         auto n = Dev::GetOffsetNod(nod, o);
