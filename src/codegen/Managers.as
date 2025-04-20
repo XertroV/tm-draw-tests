@@ -1,13 +1,15 @@
+const uint16 O_SCENEVIS_KinematicsVis_SMgr = 0x1A0;
+
 NSceneKinematicVis_SMgr@ Get_NSceneKinematicsVis_SMgr(CGameCtnApp@ app) {
     if (app.GameScene is null) return null;
-    auto nod = Dev::GetOffsetNod(app.GameScene, 0x1A0);
+    auto nod = Dev::GetOffsetNod(app.GameScene, O_SCENEVIS_KinematicsVis_SMgr);
     if (nod is null) return null;
     return Dev::ForceCast<NSceneKinematicVis_SMgr@>(nod).Get();
 }
 
 uint64 Get_NSceneKinematicsVis_SMgr_Ptr(CGameCtnApp@ app) {
     if (app.GameScene is null) return 0;
-    auto ptr = Dev::GetOffsetUint64(app.GameScene, 0x1A0);
+    auto ptr = Dev::GetOffsetUint64(app.GameScene, O_SCENEVIS_KinematicsVis_SMgr);
     return ptr;
 }
 
@@ -16,8 +18,6 @@ D_NSceneKinematicVis_SMgr@ Get_D_NSceneKinematicVis_SMgr(CGameCtnApp@ app) {
     if (Dev_PointerLooksBad(ptr)) return null;
     return D_NSceneKinematicVis_SMgr(ptr);
 }
-
-const uint16 O_SCENEVIS_KinematicsVis_SMgr = 0x1A0;
 
 CachedAddrVal@ Get_NSceneKinematicsVis_SMgr_CAV(CGameCtnApp@ app) {
     if (app.GameScene is null) return null;
