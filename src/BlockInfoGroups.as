@@ -245,8 +245,8 @@ namespace NodPtrs {
         warn("NodPtrs::Cleanup");
         @g_TmpSpaceAsNod = null;
         if (g_TmpPtrSpace != 0) {
-            g_TmpPtrSpace = 0;
             Dev::Free(g_TmpPtrSpace);
+            g_TmpPtrSpace = 0;
         }
     }
 }

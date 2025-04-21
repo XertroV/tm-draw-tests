@@ -288,7 +288,6 @@ class ConstraintWatcher {
     }
 
     void MoveTowardsTargetPos(vec3 target, float dt) {
-        // lastPos = (target - lastPos) * Math::Clamp(Math::Exp(-0.1 * g_DT), 0.0, 1.0) + lastPos;
         // constraint.Pos = lastPos = SmoothFollow(target, lastPos, dt, 1);
         // auto priorPos = lastPos;
         lastPos = SmoothFollow(lastPos, target, dt, 12.0);
