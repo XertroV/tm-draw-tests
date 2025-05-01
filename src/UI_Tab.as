@@ -21,6 +21,8 @@ class Tab {
     bool expandWindowNextFrame = false;
     bool windowExpanded = false;
     bool closeWindowOnEscape = false;
+    // don't draw the tab name and pop out button
+    bool noContentWrap = false;
 
     bool tabInWarningState = false;
 
@@ -62,14 +64,18 @@ class Tab {
     }
 
     int get_TabFlags() {
-        int flags = UI::TabItemFlags::NoCloseWithMiddleMouseButton
+        return UI::TabItemFlags::NoCloseWithMiddleMouseButton
             | UI::TabItemFlags::NoReorder
+            | TabFlagSelected
             ;
+    }
+
+    int get_TabFlagSelected() {
         if (_ShouldSelectNext) {
             _ShouldSelectNext = false;
-            flags |= UI::TabItemFlags::SetSelected;
+            return UI::TabItemFlags::SetSelected;
         }
-        return flags;
+        return UI::TabItemFlags::None;
     }
 
     int get_WindowFlags() {
@@ -102,15 +108,28 @@ class Tab {
             DrawTabWrapInner();
             return;
         }
-        if (UI::BeginTabItem(tabName, TabFlags)) {
+        if (_BeginTabItem(tabName, TabFlags)) {
             if (UI::BeginChild(fullName))
                 DrawTabWrapInner();
             UI::EndChild();
             UI::EndTabItem();
         }
+        _AfterDrawTab();
+    }
+
+    // for overriding
+    void _AfterDrawTab() {}
+
+    // overload me if tabs are closeable
+    bool _BeginTabItem(const string &in l, int flags) {
+        return UI::BeginTabItem(l, flags);
     }
 
     void DrawTabWrapInner() {
+        if (noContentWrap) {
+            DrawInnerWrapID();
+            return;
+        }
         UX::LayoutLeftRight("tabHeader|"+fullName,
             CoroutineFunc(_HeadingLeft),
             CoroutineFunc(_HeadingRight)

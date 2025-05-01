@@ -13,10 +13,39 @@ void RenderMenu() {
     if (UI::MenuItem("g_RunDipsItemExp", "", g_RunDipsItemExp)) {
         g_RunDipsItemExp = !g_RunDipsItemExp;
     }
+    if (UI::BeginMenu(MenuTitle + " Debug")) {
+        if (UI::MenuItem("Draw Debug Window", "", g_DrawLittleDebugWindow)) {
+            g_DrawLittleDebugWindow = !g_DrawLittleDebugWindow;
+        }
+        DrawDebugSimpleText();
+        UI::EndMenu();
+    }
+}
+
+bool g_DrawLittleDebugWindow = false;
+void DrawLittleDebugWindow() {
+    if (!g_DrawLittleDebugWindow) return;
+    if (UI::Begin("Debug Window", g_DrawLittleDebugWindow)) {
+        DrawDebugSimpleText();
+    }
+    UI::End();
+}
+void DrawDebugSimpleText() {
+    UI::Text("g_lastMousePos: " + g_lastMousePos.ToString());
+    UI::Text("g_screen = " + g_screen.ToString());
+    UI::Text("mouse pos uv = " + (g_lastMousePos / g_screen).ToString());
+    UI::Text("g_DT: " + g_DT);
+    UI::Text("g_TimeMs: " + g_TimeMs);
+    UI::Text("g_shiftDown: " + g_shiftDown);
+    UI::Text("g_ctrlDown: " + g_ctrlDown);
+    UI::Text("g_altDown: " + g_altDown);
 }
 
 void Render() {
     Render_DipsItemExperiment();
+    CM_Editor::Render();
+    g_toolbarExtras.Draw();
+    DrawLittleDebugWindow();
 
     // if (testGizmo is null) @testGizmo = RotationTranslationGizmo("test");
     // testGizmo.DrawAll();
@@ -28,11 +57,16 @@ void Render() {
     // }
 
     // RenderFireworkTest();
+
     if (!g_Window || root is null) return;
     if (UI::Begin(PluginName, g_Window)) {
         root.DrawTabsAsSidebar();
     }
     UI::End();
+}
+
+void RenderEarly() {
+    g_lastMousePos = vec2(UI::GetMousePos());
 }
 
 float _PluginLoadTime = Time::Now;
@@ -61,6 +95,11 @@ NG::GraphTab@ g_GraphTab;
 
 void Main() {
     startnew(DipsItemExperiment).WithRunContext(Meta::RunContext::AfterMainLoop);
+    CM_Editor::OnPluginLoad();
+
+    if (false) InitNodeGraphStuff();
+
+
     // startnew(TryExtractNewItem);
     // print("Path split: /test\\234/a/lskdjf.map.gbx: " + ArrayOfStrToStr(SplitPath("/test\\234/a/lskdjf.map.gbx")));
 
@@ -69,7 +108,6 @@ void Main() {
     // BlockInfoGroups::Run();
     // BlockInfoGroups::RunGetPillarsAndReplacements();
     // startnew(RunFindBlocks);
-    InitNodeGraphStuff();
     // startnew(RunJsonBenchmarks);
 
 //     CMwCmdBufferCore@ cmdBuffer = CMwCmdBufferCore();

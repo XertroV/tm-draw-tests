@@ -31,17 +31,6 @@ void RenderFireworkTest() {
     }
 }
 
-void nvgDrawCircle(vec2 pos) {
-    nvg::Reset();
-    nvg::BeginPath();
-    nvg::FillColor(cGreen);
-    nvg::StrokeColor(cMagenta);
-    nvg::Circle(pos, 10);
-    nvg::Fill();
-    nvg::Stroke();
-    nvg::ClosePath();
-}
-
 void RunFireworksTest() {
     sleep(1000);
     trace('starting fw test');

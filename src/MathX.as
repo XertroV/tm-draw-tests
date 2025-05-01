@@ -145,6 +145,10 @@ namespace MathX {
         return output;
     }
 
+    vec2 Abs(vec2 v) {
+        return vec2(Math::Abs(v.x), Math::Abs(v.y));
+    }
+
     float[]@ Abs(const float[] &in arr, float[]@ output) {
         output.Resize(arr.Length);
         for (uint i = 0; i < arr.Length; i++) {
