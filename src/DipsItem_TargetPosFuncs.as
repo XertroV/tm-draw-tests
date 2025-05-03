@@ -51,7 +51,7 @@ mat4 CalcTarget_Char() {
 
     if (Math::IsNaN(CharHeadTopNeckOffset)) {
         warn("CharHeadTopNeckOffset is NaN");
-        CharHeadTopNeckOffset = 0.116;
+        CharHeadTopNeckOffset = 0.136;
     }
     auto head = vec3(0, CharHeadTopNeckOffset, 0);
     // if (_countN % 10 == 0) trace('head: ' + head.ToString());
@@ -67,7 +67,7 @@ mat4 CalcTarget_Char() {
     if (S_SillyCrown) tiltRot = tiltRotInv;
 
     // auto neck = vec3(0, 0.9701 - CharHeadTopNeckOffset, -0.1) + head;
-    auto neck = vec3(0, 0.8701 - CharHeadTopNeckOffset, -0.1401) + head;
+    auto neck = vec3(0, 0.8701 - CharHeadTopNeckOffset, -0.1501) + head;
     neck = (invR * neck).xyz;
 
     // auto m = mat4::Translate(charVis.Pos + neck) * r * tiltRot;
