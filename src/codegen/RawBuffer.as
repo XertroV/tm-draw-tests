@@ -274,6 +274,14 @@ class RawBufferElem {
         CheckOffset(o, 16);
         Dev::Write(ptr + o, value);
     }
+    quat GetQuat(uint o) {
+        CheckOffset(o, 16);
+        return Vec4ToQuat(Dev::ReadVec4(ptr + o));
+    }
+    void SetQuat(uint o, const quat &in value) {
+        CheckOffset(o, 16);
+        Dev::Write(ptr + o, QuatToVec4(value));
+    }
     mat3 GetMat3(uint o) {
         CheckOffset(o, 36);
         return mat3(Dev::ReadVec3(ptr + o), Dev::ReadVec3(ptr + o + 12), Dev::ReadVec3(ptr + o + 24));
@@ -569,4 +577,15 @@ CMwNod@ Dev_GetArbitraryNodAt(uint64 ptr) {
     if (ptr == 0) throw('null pointer passed');
     Dev::SetOffset(NodPtrs::g_TmpSpaceAsNod, 0, ptr);
     return Dev::GetOffsetNod(NodPtrs::g_TmpSpaceAsNod, 0);
+}
+
+
+
+
+
+quat Vec4ToQuat(vec4 v) {
+    return quat(v.x, v.y, v.z, v.w);
+}
+vec4 QuatToVec4(quat q) {
+    return vec4(q.x, q.y, q.z, q.w);
 }

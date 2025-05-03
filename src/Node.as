@@ -677,12 +677,12 @@ namespace NG {
         }
 
         bool CheckIO() {
-            for (int i = 0; i < inputs.Length; i++) {
+            for (uint i = 0; i < inputs.Length; i++) {
                 if (inputs[i] is null) {
                     return false;
                 }
             }
-            for (int i = 0; i < outputs.Length; i++) {
+            for (uint i = 0; i < outputs.Length; i++) {
                 if (outputs[i] is null) {
                     return false;
                 }
@@ -706,7 +706,7 @@ namespace NG {
 
         int64 GetInt(int index) {
             // Read the value from the input
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetInt();
             }
             return 0;
@@ -714,7 +714,7 @@ namespace NG {
 
         void WriteInt(int index, int64 value) {
             // Write the value to the output
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteInt(value);
                 outputs[index].SignalUpdated();
             }
@@ -722,7 +722,7 @@ namespace NG {
 
         double GetFloat(int index) {
             // Read the value from the input
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetFloat();
             }
             return 0;
@@ -730,7 +730,7 @@ namespace NG {
 
         void WriteFloat(int index, double value) {
             // Write the value to the output
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteFloat(value);
                 outputs[index].SignalUpdated();
             }
@@ -738,7 +738,7 @@ namespace NG {
 
         string GetString(int index) {
             // Read the value from the input
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetString();
             }
             return "";
@@ -746,7 +746,7 @@ namespace NG {
 
         void WriteString(int index, const string &in value) {
             // Write the value to the output
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteString(value);
                 outputs[index].SignalUpdated();
             }
@@ -754,7 +754,7 @@ namespace NG {
 
         Json::Value@ GetJsonValue(int index) {
             // Read the value from the input
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetJsonValue();
             }
             return null;
@@ -762,7 +762,7 @@ namespace NG {
 
         void WriteJsonValue(int index, Json::Value@ value) {
             // Write the value to the output
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteJsonValue(value);
                 outputs[index].SignalUpdated();
             }
@@ -770,7 +770,7 @@ namespace NG {
 
         vec2 GetVec2(int index) {
             // Read the value from the input
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetVec2();
             }
             return vec2();
@@ -778,7 +778,7 @@ namespace NG {
 
         void WriteVec2(int index, const vec2 &in value) {
             // Write the value to the output
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteVec2(value);
                 outputs[index].SignalUpdated();
             }
@@ -786,7 +786,7 @@ namespace NG {
 
         vec3 GetVec3(int index) {
             // Read the value from the input
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetVec3();
             }
             return vec3();
@@ -794,7 +794,7 @@ namespace NG {
 
         void WriteVec3(int index, const vec3 &in value) {
             // Write the value to the output
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteVec3(value);
                 outputs[index].SignalUpdated();
             }
@@ -802,7 +802,7 @@ namespace NG {
 
         vec4 GetVec4(int index) {
             // Read the value from the input
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetVec4();
             }
             return vec4();
@@ -810,7 +810,7 @@ namespace NG {
 
         void WriteVec4(int index, const vec4 &in value) {
             // Write the value to the output
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteVec4(value);
                 outputs[index].SignalUpdated();
             }
@@ -818,7 +818,7 @@ namespace NG {
 
         mat3 GetMat3(int index) {
             // Read the value from the input
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetMat3();
             }
             return mat3();
@@ -826,7 +826,7 @@ namespace NG {
 
         void WriteMat3(int index, const mat3 &in value) {
             // Write the value to the output
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteMat3(value);
                 outputs[index].SignalUpdated();
             }
@@ -834,7 +834,7 @@ namespace NG {
 
         mat4 GetMat4(int index) {
             // Read the value from the input
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetMat4();
             }
             return mat4();
@@ -842,7 +842,7 @@ namespace NG {
 
         void WriteMat4(int index, const mat4 &in value) {
             // Write the value to the output
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteMat4(value);
                 outputs[index].SignalUpdated();
             }
@@ -850,7 +850,7 @@ namespace NG {
 
         ReferencedNod@ GetNod(int index) {
             // Read the value from the input
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetNod();
             }
             return null;
@@ -858,42 +858,42 @@ namespace NG {
 
         void WriteNod(int index, ReferencedNod@ n) {
             // Write the value to the output
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteNod(n);
                 outputs[index].SignalUpdated();
             }
         }
 
         bool IsInputArray(int index) {
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].IsArrayType;
             }
             return false;
         }
 
         const float[]@ GetFloatArray(int index) {
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetFloatArray();
             }
             return null;
         }
 
         void WriteFloatArray(int index, const float[] &in values) {
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteFloatArray(values);
                 outputs[index].SignalUpdated();
             }
         }
 
         const int64[]@ GetIntArray(int index) {
-            if (index < inputs.Length && inputs[index] !is null) {
+            if ((index) < int(inputs.Length) && inputs[index] !is null) {
                 return inputs[index].GetIntArray();
             }
             return null;
         }
 
         void WriteIntArray(int index, const int64[] &in values) {
-            if (index < outputs.Length && outputs[index] !is null) {
+            if ((index) < int(outputs.Length) && outputs[index] !is null) {
                 outputs[index].WriteIntArray(values);
                 outputs[index].SignalUpdated();
             }

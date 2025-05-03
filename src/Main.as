@@ -97,8 +97,8 @@ void Main() {
     startnew(DipsItemExperiment).WithRunContext(Meta::RunContext::AfterMainLoop);
     CM_Editor::OnPluginLoad();
 
+    // tmp disable for load speed
     if (false) InitNodeGraphStuff();
-
 
     // startnew(TryExtractNewItem);
     // print("Path split: /test\\234/a/lskdjf.map.gbx: " + ArrayOfStrToStr(SplitPath("/test\\234/a/lskdjf.map.gbx")));

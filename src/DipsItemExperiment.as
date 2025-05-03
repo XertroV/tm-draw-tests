@@ -9,6 +9,9 @@ void Render_DipsItemExperiment() {
 }
 
 void Draw_DipsItemExperiment_Main() {
+    Draw_Target_Params();
+    UI::Separator();
+
     UI::Text("global_DT: " + Text::Format("%.4f", g_DT));
     UI::Text("LastGcDt3: " + Text::Format("%.4f", g_LastGcDt3));
     UI::Text("LastGcDt2: " + Text::Format("%.4f", g_LastGcDt2));
@@ -48,10 +51,10 @@ void Draw_Constraint(uint i, D_NSceneKinematicVis_SConstraint@ constraint) {
     AddSimpleTooltip("Might be prefab mgr index");
 }
 
-DipsItemAnims@ followers;
+DipsItemAnims@[] followers;
 
 void DipsItemExperiment() {
-    sleep(1000);
+    sleep(100);
     trace('DipsItemExperiment started');
     auto app = GetApp();
     while (true) {
@@ -61,14 +64,21 @@ void DipsItemExperiment() {
         }
         // wait to enter playground
         while (app.RootMap is null || app.CurrentPlayground is null) yield();
-
-        yield(5);
+        for (uint i = 0; i < 5; i++) {
+            yield();
+            if (app.RootMap is null || app.CurrentPlayground is null) continue;
+        }
         // trace('Reflection::GetRefCount(app.RootMap): ' + Reflection::GetRefCount(app.RootMap));
         if (app.RootMap is null || app.CurrentPlayground is null || Reflection::GetRefCount(app.RootMap) <= 0) continue;
 
+
         auto mapId = app.RootMap.Id.Value;
         trace('DipsItemExperiment: running mapId: ' + mapId);
-        @followers = DipsItemAnims(app.RootMap, "DipsCollectable");
+        followers.InsertLast(DipsItemAnims(app.RootMap, "Z_BF2\\DipsCollectable.Item.Gbx"));
+        followers.InsertLast(DipsItemAnims(app.RootMap, "Z_BF2\\BF2_Crown.Item.Gbx", 1, NewCrownInMap).WithTarget(CalcTarget_Char));
+        followers.InsertLast(DipsItemAnims(app.RootMap, "CoordinateMarker_Kin.Item.Gbx", 1, NewCoordHelperInMap).WithTarget(CalcTarget_Coord_Char));
+
+
         HookCamUpdate_CSmArenaClient_UpdateAsync.Apply();
         while (app.RootMap !is null && app.CurrentPlayground !is null && app.RootMap.Id.Value == mapId && g_RunDipsItemExp) {
             // _MostlyAfter_CSmArenaClient_UpdateAsync();
@@ -76,11 +86,20 @@ void DipsItemExperiment() {
         }
 
         trace('DipsItemExperiment: finished mapId');
-        followers.ResetWatchedConstraints();
-        @followers = null;
+        for (uint i = 0; i < followers.Length; i++) {
+            if (followers[i] !is null) {
+                followers[i].ResetWatchedConstraints();
+            }
+        }
+        followers.RemoveRange(0, followers.Length);
         HookCamUpdate_CSmArenaClient_UpdateAsync.Unapply();
     }
 }
+
+// MARK: DipsItemAnims
+
+funcdef CollectableItemInMap@ CreateItemInMapFunc(uint ix, uint dipsIx, CGameCtnAnchoredObject@ item);
+funcdef mat4 CalcTargetFunc();
 
 class DipsItemAnims {
     CGameCtnChallenge@ map;
@@ -88,15 +107,33 @@ class DipsItemAnims {
     MemMutCheck@ memMutCheck;
     MwId modelId;
 
-    DipsItemAnims(CGameCtnChallenge@ map, const string &in modelIdName) {
+    bool itemModelRegistered = false;
+    CollectableItemInMap@[] items;
+
+    ConstraintWatcher@[] watchers;
+    CreateItemInMapFunc@ createItemInMap = NewItemInMap;
+    CalcTargetFunc@ calcTargetFunc = CalcTarget_Vehicle;
+
+
+    DipsItemAnims(CGameCtnChallenge@ map, const string &in modelIdName, int limit = -1, CreateItemInMapFunc@ createItemInMap = null) {
+        modelId.SetName(modelIdName);
         this.modelIdName = modelIdName;
-        modelId.Value = -1;
+        // modelId.Value = -1;
         @memMutCheck = MemMutCheck().GameScene();
 
         @this.map = map;
         map.MwAddRef();
 
+        if (createItemInMap !is null) {
+            @this.createItemInMap = createItemInMap;
+        }
+
         startnew(CoroutineFunc(this.Init));
+    }
+
+    DipsItemAnims@ WithTarget(CalcTargetFunc@ func) {
+        @this.calcTargetFunc = func;
+        return this;
     }
 
     ~DipsItemAnims() {
@@ -112,21 +149,26 @@ class DipsItemAnims {
     }
 
     void Init() {
-        // 1000 items in ~ 3ms on my pc (3x when comparing strings)
+        // 1100 items in ~ 3ms on my pc (3x when comparing strings)
         // 300 items in ~ 1ms
         uint pauseLim = 300;
         uint plMinus1 = pauseLim - 1;
         uint i = 0;
         uint nbItemsInMap = map.AnchoredObjects.Length;
-        // find the first instance of the item model, save the id.Value
-        for (; i < nbItemsInMap; i++) {
-            if (map.AnchoredObjects[i].ItemModel.Name == modelIdName) {
-                modelId.Value = map.AnchoredObjects[i].ItemModel.Id.Value;
-                trace('DipsItemsAnims found initial item: ' + modelId.GetName());
-                break;
+
+        if (modelId.Value == 0) {
+            // find the first instance of the item model, save the id.Value
+            for (; i < nbItemsInMap; i++) {
+                if (map.AnchoredObjects[i].ItemModel.Name == modelIdName) {
+                    modelId.Value = map.AnchoredObjects[i].ItemModel.Id.Value;
+                    trace('DipsItemsAnims found initial item: ' + modelId.GetName());
+                    break;
+                }
+                if (i % pauseLim == plMinus1) yield();
             }
-            if (i % pauseLim == plMinus1) yield();
         }
+
+        // BenchmarkTestMwId();
 
         // loop through the rest of the items and register matching
         for (; i < nbItemsInMap; i++) {
@@ -145,13 +187,35 @@ class DipsItemAnims {
         trace('DipsItemsAnims: finished init');
     }
 
-    bool itemModelRegistered = false;
-    CollectableItemInMap@[] items;
+
+    void BenchmarkTestMwId() {
+#if DEV
+        // test 10k checks
+        auto nbItemsInMap = map.AnchoredObjects.Length;
+        auto jMax = Math::Max(1, 100000 / nbItemsInMap + 1);
+        uint start = Time::Now;
+        for (uint j = 0; j < jMax; j++) {
+            for (uint i = 0; i < nbItemsInMap; i++) {
+                if (map.AnchoredObjects[i].ItemModel.Id.Value == modelId.Value) {
+                    auto item = map.AnchoredObjects[i];
+                    trace('found: ' + item.ItemModel.Name + " @ " + item.AbsolutePositionInMap.ToString());
+                    // RegisterItem(i, item);
+                    // trace('DipsItemsAnims found item: ' + item.ItemModel.Name + " @ " + item.AbsolutePositionInMap.ToString());
+                }
+                // if (i % pauseLim == plMinus1) yield();
+            }
+        }
+        uint end = Time::Now;
+        float itemsPerMs = float(jMax * nbItemsInMap) / float(end - start);
+        trace('\\$b8f\\$i BENCH - DipsItemsAnims: test took ' + (end - start) + ' ms for ' + (jMax*nbItemsInMap) + ' iterations -- ' + itemsPerMs + ' items/ms. NbItems: ' + nbItemsInMap);
+        trace('\\$b8f\\$i BENCH - modelId.Value: ' + FmtUintHex(modelId.Value) + ' / name: ' + modelId.GetName());
+#endif
+    }
+
 
     void RegisterItem(uint ix, CGameCtnAnchoredObject@ item) {
         RegisterItemModel(item.ItemModel);
-        auto iim = CollectableItemInMap(ix, items.Length, item);
-        items.InsertLast(iim);
+        items.InsertLast(createItemInMap(ix, items.Length, item));
     }
 
     void RegisterItemModel(CGameItemModel@ model) {
@@ -203,11 +267,12 @@ class DipsItemAnims {
         }
     }
 
+    // has kinematic constraint ptr
     bool HasKCPtr(uint64 ptr) {
         return kcPointers.Find(ptr) > -1;
     }
 
-    ConstraintWatcher@[] watchers;
+    // MARK: watchers
 
     void AddKinVisConstraint(D_NSceneKinematicVis_SConstraint@ constraint) {
         auto kcPtr = constraint.Signal.ModelPtr;
@@ -235,20 +300,37 @@ class DipsItemAnims {
     }
 
     bool goneBad = false;
-    void Update(float dt, const vec3 &in targetPos) {
+    void Update(float dt) {
         if (goneBad || memMutCheck.HasChanged()) {
             if (!goneBad) trace('DipsItemsAnims: memMutCheck failed');
             goneBad = true;
             return;
         }
 
+        auto target = this.calcTargetFunc();
+        auto targetPos = Mat4_GetPos(target);
         for (uint i = 0; i < watchers.Length; i++) {
+            // set rotation before pos because it includes a pos
+            watchers[i].SetLoc(target);
             watchers[i].MoveTowardsTargetPos(targetPos, dt);
         }
         // trace('DipsItemsAnims: Updated ' + watchers.Length + ' constraints');
     }
 }
 
+// MARK: ItemInMap
+
+CollectableItemInMap@ NewItemInMap(uint ix, uint dipsIx, CGameCtnAnchoredObject@ item) {
+    return CollectableItemInMap(ix, dipsIx, item);
+}
+
+CollectableItemInMap@ NewCrownInMap(uint ix, uint dipsIx, CGameCtnAnchoredObject@ item) {
+    return CrownItemInMap(ix, dipsIx, item);
+}
+
+CollectableItemInMap@ NewCoordHelperInMap(uint ix, uint dipsIx, CGameCtnAnchoredObject@ item) {
+    return CoordItemInMap(ix, dipsIx, item);
+}
 
 class CollectableItemInMap {
     vec3 pos;
@@ -262,8 +344,35 @@ class CollectableItemInMap {
         this.ix = ix;
         this.dipsIx = dipsIx;
     }
+
+    vec3 MoveTowardsTargetPos(vec3 lastPos, vec3 target, float dt) {
+        // constraint.Pos = lastPos = SmoothFollow(target, lastPos, dt, 1);
+        // auto priorPos = lastPos;
+        return SmoothFollow(lastPos, target, dt, 12.0);
+    }
 }
 
+class CrownItemInMap : CollectableItemInMap {
+    CrownItemInMap(uint ix, uint dipsIx, CGameCtnAnchoredObject@ item) {
+        super(ix, dipsIx, item);
+    }
+
+    vec3 MoveTowardsTargetPos(vec3 lastPos, vec3 target, float dt) override {
+        return target;
+    }
+}
+
+class CoordItemInMap : CollectableItemInMap {
+    CoordItemInMap(uint ix, uint dipsIx, CGameCtnAnchoredObject@ item) {
+        super(ix, dipsIx, item);
+    }
+
+    vec3 MoveTowardsTargetPos(vec3 lastPos, vec3 target, float dt) override {
+        return target;
+    }
+}
+
+// MARK: ConstraintWatcher
 
 class ConstraintWatcher {
     D_NSceneKinematicVis_SConstraint@ constraint;
@@ -288,12 +397,18 @@ class ConstraintWatcher {
     }
 
     void MoveTowardsTargetPos(vec3 target, float dt) {
-        // constraint.Pos = lastPos = SmoothFollow(target, lastPos, dt, 1);
-        // auto priorPos = lastPos;
-        lastPos = SmoothFollow(lastPos, target, dt, 12.0);
-        // trace('ConstraintWatcher: from -> to ' + priorPos.ToString() + " -> " + target.ToString() + " @ dt = " + dt + " ms; next = " + lastPos.ToString());
+        lastPos = itemInMap.MoveTowardsTargetPos(lastPos, target, dt);
         constraint.Pos = lastPos;
-        // constraint.Pos = lastPos = target;
+        // // constraint.Pos = lastPos = SmoothFollow(target, lastPos, dt, 1);
+        // // auto priorPos = lastPos;
+        // lastPos = SmoothFollow(lastPos, target, dt, 12.0);
+        // // trace('ConstraintWatcher: from -> to ' + priorPos.ToString() + " -> " + target.ToString() + " @ dt = " + dt + " ms; next = " + lastPos.ToString());
+        // constraint.Pos = lastPos;
+        // // constraint.Pos = lastPos = target;
+    }
+
+    void SetLoc(const mat4 &in rot) {
+        constraint.Loc = iso4(rot);
     }
 
     void Reset() {
@@ -309,7 +424,7 @@ vec3 SmoothFollow(vec3 current, vec3 target, float dt, float decayRate = 8.0) {
 }
 
 
-
+// MARK: MemMutCheck
 
 const uint16 O_APP_GAMESCENE = GetOffset("CGameCtnApp", "GameScene");
 
@@ -377,7 +492,7 @@ class CachedAddrVal {
 
 
 
-
+// MARK: Hook
 
 /*
 hook location: before position of SConstraints are read under some calls from CSmArenaClient::UpdateAsync
@@ -410,6 +525,12 @@ HookHelper@ HookCamUpdate_CSmArenaClient_UpdateAsync = HookHelper(
 
 void _MostlyAfter_CSmArenaClient_UpdateAsync() {
     if (followers is null) return;
+    if (followers.Length == 0) return;
+
+    for (uint i = 0; i < followers.Length; i++) {
+        followers[i].Update(g_DT);
+    }
+
     auto app = GetApp();
     vec3 targetPos;
     float dt = g_DT * 0.001;
@@ -437,5 +558,24 @@ void _MostlyAfter_CSmArenaClient_UpdateAsync() {
     g_LastGcDt3 = g_LastGcDt2;
     g_LastGcDt2 = g_LastGcDt;
     g_LastGcDt = dt * 1000.0;
-    followers.Update(dt, targetPos);
+    for (uint i = 0; i < followers.Length; i++) {
+        followers[i].Update(dt);
+    }
+}
+
+// CalcTarget functions
+
+
+// MARK: misc
+
+string FmtUintHex(uint v) {
+    return Text::Format("0x%08x", v);
+}
+
+vec3 Iso4_GetPos(const iso4 &in iso) {
+    return vec3(iso.tx, iso.ty, iso.tz);
+}
+
+vec3 Mat4_GetPos(const mat4 &in m) {
+    return vec3(m.tx, m.ty, m.tz);
 }
