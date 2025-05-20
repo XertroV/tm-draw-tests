@@ -21,13 +21,19 @@ namespace CM_Editor {
     }
 
     void Main() {
-        if (!IO::FolderExists(ProjectsDir)) IO::CreateFolder(ProjectsDir, true);
-        auto projs = ListProjects();
-        if (projs.Length == 0) IO::CreateFolder(ProjectsDir + "/Test", false);
-        if (projs.Length < 2) IO::CreateFolder(ProjectsDir + "/Test2_ASDF", false);
-        @projs = ListProjects();
-        // trace("Projects: " + Json::Write(projs.ToJson()));
+        // if (!IO::FolderExists(ProjectsDir)) IO::CreateFolder(ProjectsDir, true);
+        // auto projs = ListProjects();
+        // if (projs.Length == 0) IO::CreateFolder(ProjectsDir + "/Test", false);
+        // if (projs.Length < 2) IO::CreateFolder(ProjectsDir + "/Test2_ASDF", false);
+        // @projs = ListProjects();
+        // // trace("Projects: " + Json::Write(projs.ToJson()));
+        // Dev::InterceptProc("CGameCtnEditorFree", "SwitchToTestWithMapTypeFromScript_OnOk", Dev::ProcIntercept(_SwitchToTestWithMapTypeFromScript_OnOk));
     }
+
+    // bool _SwitchToTestWithMapTypeFromScript_OnOk(CMwStack &in stack) {
+    //     NotifyWarning("SwitchToTestWithMapTypeFromScript_OnOk");
+    //     return true;
+    // }
 
     void Render() {
         if (!S_EditorWindowOpen) return;
@@ -36,6 +42,12 @@ namespace CM_Editor {
             Draw_CMEditor_WindowMain();
         }
         UI::End();
+    }
+
+    void RenderMenu() {
+        if (UI::MenuItem("Dips++ CustomMap Editor", "", S_EditorWindowOpen)) {
+            S_EditorWindowOpen = !S_EditorWindowOpen;
+        }
     }
 
     // MARK: Project Management
@@ -211,7 +223,7 @@ namespace CM_Editor {
             UI::Text("Selected Project: " + meta.name);
             UI::Text("Path: " + meta.path);
             UI::Separator();
-            if (UI::Button(Icons::FolderOpenO + " Open")) {
+            if (UI::Button(Icons::Pencil + " Edit Project")) {
                 AddProjectTab(meta);
             }
             UI::SameLine();
@@ -466,10 +478,10 @@ namespace CM_Editor {
             grp1.AddComponent(ProjectInfoComponent(PROJ_FILE_INFO, meta));
             grp1.AddComponent(ProjectFloorsComponent(PROJ_FILE_FLOORS, meta));
             grp2.AddComponent(ProjectVoiceLinesComponent(PROJ_FILE_VOICELINES, meta));
+            grp2.AddComponent(ProjectAssetsComponent(PROJ_FILE_ASSETS, meta));
             // grp2.AddComponent(ProjectTriggersComponent());
             // grp2.AddComponent(ProjectMinigamesComponent());
             // grp2.AddComponent(ProjectCollectablesComponent());
-            // grp2.AddComponent(ProjectAssetsComponent());
         }
 
         ProjectComponentGroup@ AddComponentGroup(const string &in name) {
@@ -489,6 +501,9 @@ namespace CM_Editor {
             return null;
         }
 
+        ProjectAssetsComponent@ GetAssetsComponent() {
+            return cast<ProjectAssetsComponent>(GetComponentByType(EProjectComponent::Assets));
+        }
 
         ProjectComponent@ GetComponentByType(EProjectComponent type) {
             for (uint i = 0; i < componentGroups.Length; i++) {
@@ -560,32 +575,11 @@ namespace CM_Editor {
             UI::EndChild();
         }
 
-        int selectedComponent = 0;
+        int selectedComponent = EProjectComponent::Info;
         void DrawProjComponentSelector() {
             for (uint i = 0; i < componentGroups.Length; i++) {
                 selectedComponent = componentGroups[i].DrawSelector(selectedComponent);
             }
-            return;
-            // UI::SeparatorText("\\$i\\$bbbProject");
-            // if (UI::Selectable(Icons::InfoCircle + " Project Info", selectedComponent == int(EProjectComponent::Info))) {
-            //     selectedComponent = EProjectComponent::Info;
-            // }
-            // if (UI::Selectable(Icons::BuildingO + " Floors", selectedComponent == int(EProjectComponent::Floors))) {
-            //     selectedComponent = EProjectComponent::Floors;
-            // }
-            // UI::SeparatorText("\\$i\\$bbbComponents");
-            // if (UI::Selectable(Icons::CommentO + " Voice Lines", selectedComponent == int(EProjectComponent::VoiceLines))) {
-            //     selectedComponent = EProjectComponent::VoiceLines;
-            // }
-            // if (UI::Selectable(Icons::Cog + " Triggers", selectedComponent == int(EProjectComponent::Triggers))) {
-            //     selectedComponent = EProjectComponent::Triggers;
-            // }
-            // if (UI::Selectable(Icons::Gamepad + " Minigames", selectedComponent == int(EProjectComponent::Minigames))) {
-            //     selectedComponent = EProjectComponent::Minigames;
-            // }
-            // if (UI::Selectable(Icons::FileO + " Assets", selectedComponent == int(EProjectComponent::Assets))) {
-            //     selectedComponent = EProjectComponent::Assets;
-            // }
         }
 
         void DrawProjComponent() {
@@ -595,48 +589,8 @@ namespace CM_Editor {
                     break;
                 }
             }
-            // switch (EProjectComponent(selectedComponent)) {
-            //     case EProjectComponent::Info: DrawProjInfo(); break;
-            //     case EProjectComponent::Floors: DrawFloors(); break;
-            //     case EProjectComponent::VoiceLines: DrawVoiceLines(); break;
-            //     case EProjectComponent::Triggers: DrawTriggers(); break;
-            //     case EProjectComponent::Minigames: DrawMinigames(); break;
-            //     case EProjectComponent::Assets: DrawAssets(); break;
-            // }
         }
 
-        // void DrawProjInfo() {
-        //     UI::Text("Project Name: " + meta.name);
-        //     UI::Text("Project Path: " + meta.path);
-        //     UI::Separator();
-        //     UI::TextWrapped("This is the project info tab. You can add more info here.");
-        // }
-
-        // void DrawFloors() {
-        //     UI::Text("Floors");
-        //     UI::Separator();
-        //     if (meta.hasFloors) {
-        //         UI::TextWrapped("Floors loaded: " + meta.jro_Floors.Length);
-        //     } else {
-        //         UI::TextWrapped("No floors found.");
-        //         if (UI::Button(Icons::Plus + " Add Floors")) {
-        //             InitFloors();
-        //         }
-        //     }
-        // }
-
-        // void DrawVoiceLines() {
-        //     UI::Text("Voice Lines");
-        //     UI::Separator();
-        //     if (meta.hasVoiceLines) {
-        //         UI::TextWrapped("Voice lines loaded: " + meta.jro_VoiceLine.Length);
-        //     } else {
-        //         UI::TextWrapped("No voice lines found.");
-        //         if (UI::Button(Icons::Plus + " Add Voice Lines")) {
-        //             InitVoiceLines();
-        //         }
-        //     }
-        // }
         // void DrawTriggers() {
         //     UI::Text("Triggers");
         //     UI::Separator();
@@ -673,26 +627,6 @@ namespace CM_Editor {
         //         }
         //     }
         // }
-
-        // void InitFloors() {
-
-        // }
-
-        // void InitVoiceLines() {
-
-        // }
-
-        // void InitTriggers() {
-
-        // }
-
-        // void InitMinigames() {
-
-        // }
-
-        // void InitAssets() {
-
-        // }
     }
 
     enum EProjectComponent {
@@ -721,7 +655,7 @@ namespace CM_Editor {
         return "? Unknown ?";
     }
 
-    // MARK: Project Component Group
+    // MARK: Proj Cmpnt Group
 
     class ProjectComponentGroup {
         string name;
@@ -742,6 +676,10 @@ namespace CM_Editor {
 
         ProjectFloorsComponent@ GetFloorsComponent() {
             return cast<ProjectFloorsComponent>(GetComponentByType(EProjectComponent::Floors));
+        }
+
+        ProjectAssetsComponent@ GetAssetsComponent() {
+            return cast<ProjectAssetsComponent>(GetComponentByType(EProjectComponent::Assets));
         }
 
         ProjectComponent@ GetComponentByType(EProjectComponent type) {
@@ -795,6 +733,7 @@ namespace CM_Editor {
         bool isDirty = false;
         bool hasFile = false;
         bool canInitFromDipsSpecComment = false;
+        bool thisTabClickRequiresTestPlaceMode = false;
 
         ProjectComponent(const string &in _jsonFName, ProjectMeta@ meta) {
             // default values
@@ -831,10 +770,16 @@ namespace CM_Editor {
             return selected;
         }
 
+        string get_ComponentTitleName() {
+            return name;
+        }
+
         void DrawComponent(ProjectTab@ pTab) {
-            UI::Text(name);
+            UI::Text(ComponentTitleName);
             UI::Separator();
             if (!hasFile) {
+                UI::TextWrapped("Component not found: " + name);
+                UI::TextWrapped("Create?");
                 if (canInitFromDipsSpecComment) {
                     DrawInitializeFromDipsSpecComment();
                 }
@@ -872,7 +817,7 @@ namespace CM_Editor {
         }
 
         void CreateDefaultJsonObject() {
-            throw("Override me");
+            throw("Override me: CreateDefaultJsonObject");
         }
 
         void CreateJsonDataFromComment(DipsSpec@ spec) {
@@ -893,7 +838,53 @@ namespace CM_Editor {
             hasFile = true;
             isDirty = false;
         }
+
+        void OnMouseClick(int x, int y, int button) {
+            // do nothing, for overrides
+        }
+
+        void OnSelfAwaitingMouseClick() {
+            @componentWaitingForMouseClick = this;
+            g_InterceptOnMouseClick = true;
+            g_InterceptClickRequiresTestMode = thisTabClickRequiresTestPlaceMode;
+        }
+
+        bool get_IAmAwaitingMouseClick() {
+            return componentWaitingForMouseClick is this;
+        }
+
+        void OnSelfCancelAwaitMouseClick() {
+            if (componentWaitingForMouseClick is this) {
+                @componentWaitingForMouseClick = null;
+                g_InterceptOnMouseClick = false;
+            } else if (componentWaitingForMouseClick !is null) {
+                NotifyWarning("Some other component is waiting for a mouse click: " + componentWaitingForMouseClick.name);
+            }
+        }
+
+        // utility for drawing nvg instruction text easily.
+        void DrawInstructionText(const string &in text, bool alsoUI) {
+            if (alsoUI) UI::Text(text);
+            nvg::Reset();
+            auto fontSize = 64.0 * g_screen.y / 1440.0;
+            nvg::FontSize(fontSize);
+            auto bounds = nvg::TextBounds(text) + vec2(fontSize * 0.25);
+            auto midPoint = g_screen * vec2(.5, .2);
+            auto bgRect = vec4(midPoint - bounds * 0.5, bounds);
+
+            nvg::BeginPath();
+            nvg::FillColor(cBlack);
+            nvg::RoundedRect(bgRect.xy, bgRect.zw, 8);
+            nvg::Fill();
+            nvg::ClosePath();
+
+            nvg::TextAlign(nvg::Align::Center | nvg::Align::Middle);
+            nvgDrawTextWithStroke(midPoint, text, cOrange);
+        }
+
     }
+
+    // MARK: Proj Info Cmpnt
 
     class ProjectInfoComponent : ProjectComponent {
         ProjectInfoComponent(const string &in jsonPath, ProjectMeta@ meta) {
@@ -902,6 +893,10 @@ namespace CM_Editor {
             icon = Icons::InfoCircle;
             type = EProjectComponent::Info;
             canInitFromDipsSpecComment = true;
+        }
+
+        string get_ComponentTitleName() override property {
+            return name + ": " + meta.name;
         }
 
         // proxy methods for data access
@@ -942,6 +937,12 @@ namespace CM_Editor {
                 AddSimpleTooltip("Default: empty. Reserved for future use.");
                 if (changedURL) px_url = newUrl;
             }
+
+            UI::Separator();
+
+            // todo: buttons and displays for checking that VL and Asset URLs are fine.
+            UI::Text("Todo: Checked Voice Lines Exist: x / N");
+            UI::Text("Todo: Checked Assets Exist: x / N");
         }
 
         void DrawHasComponent(EProjectComponent ty, ProjectTab@ pTab) {
@@ -950,6 +951,8 @@ namespace CM_Editor {
         }
     }
 
+    // MARK: Floors Cmpnt
+
     class ProjectFloorsComponent : ProjectComponent {
         ProjectFloorsComponent(const string &in jsonPath, ProjectMeta@ meta) {
             super(jsonPath, meta);
@@ -957,9 +960,10 @@ namespace CM_Editor {
             icon = Icons::BuildingO;
             type = EProjectComponent::Floors;
             canInitFromDipsSpecComment = true;
+            thisTabClickRequiresTestPlaceMode = true;
         }
 
-        // proxy methods for data access
+        // proxy methods for data access (px = proxy)
         bool get_px_lastFloorEnd() const { return ro_data.Get("lastFloorEnd", false); }
         void set_px_lastFloorEnd(bool v) { rw_data["lastFloorEnd"] = v; }
         uint get_nbFloors() const { return ro_data.HasKey("floors") ? ro_data["floors"].Length : 0; }
@@ -970,6 +974,31 @@ namespace CM_Editor {
         void removeFloor(uint i) {
             if (i >= nbFloors) return;
             rw_data["floors"].Remove(i);
+        }
+
+        void sortFloors() {
+            // simple sorting; should not be too inefficient if we keep floors in sorted order
+            auto @floors = rw_data["floors"];
+            if (floors.Length == 0) return;
+            // subtract 1 for the last floor
+            int nb = nbFloors - 1;
+            for (int i = 0; i < nb; i++) {
+                if (float(floors[i]["height"]) > float(floors[i + 1]["height"])) {
+                    SwapFloors(i, i + 1);
+                    i = -1; // restart
+                }
+            }
+        }
+
+        void SwapFloors(uint i, uint j) {
+            auto @floors = rw_data["floors"];
+            if ((i > j ? i : j) >= nbFloors) return;
+            string tName = floors[i]["name"];
+            float tHeight = floors[i]["height"];
+            floors[i]["name"] = floors[j]["name"];
+            floors[i]["height"] = floors[j]["height"];
+            floors[j]["name"] = tName;
+            floors[j]["height"] = tHeight;
         }
 
         void CreateJsonDataFromComment(DipsSpec@ spec) override {
@@ -987,7 +1016,281 @@ namespace CM_Editor {
             j["lastFloorEnd"] = false;
             rw_data = j;
         }
+
+        void DrawComponentInner(ProjectTab@ pTab) override {
+            UI::AlignTextToFramePadding();
+            UI::Text("# Floors: " + nbFloors);
+            UI::SameLine();
+            if (UI::Button(Icons::Plus + " Add Floor")) {
+                OnCreateNewFloor();
+            }
+            UI::Separator();
+            if (IsCreatingFloor) {
+                DrawFloorCreation();
+            } else {
+                DrawFloorsList();
+            }
+        }
+
+        void DrawFloorCreation() {
+            UI::Text("Creating new floor...");
+            DrawInstructionText("Place Car at Floor Start (or Height)", true);
+
+            if (UI::Button(Icons::Times + " Cancel")) {
+                @creatingFloor = null;
+                OnSelfCancelAwaitMouseClick();
+            }
+        }
+
+        int editIx = -1;
+
+        void DrawFloorsList() {
+            UI::AlignTextToFramePadding();
+            UI::Text("Floors List");
+            UI::SameLine();
+            if (UI::Button(Icons::Sort + " Sort")) {
+                sortFloors();
+            }
+
+            UI::TextWrapped("By default, floor names get cut off after 3-4 characters.\nLeave empty for default (the floor number).");
+
+            int remIx = -1;
+
+            UI::Separator();
+
+            UI::BeginChild("fl");
+
+            UI::BeginTable("Floors", 3, UI::TableFlags::SizingStretchProp);
+            UI::TableSetupColumn("Name", UI::TableColumnFlags::WidthStretch);
+            UI::TableSetupColumn("Height", UI::TableColumnFlags::WidthStretch);
+            UI::TableSetupColumn("Actions", UI::TableColumnFlags::WidthFixed);
+
+            for (uint i = 0; i < nbFloors; i++) {
+                bool editing = int(i) == editIx;
+                UI::PushID("flr" + i);
+                UI::TableNextRow();
+                auto floor = getFloor(i);
+                float height = floor["height"];
+                string name = floor["name"];
+                if (name.Length == 0 && !editing) name = "\\$i\\$aaaFloor " + i;
+
+                UI::TableNextColumn();
+                if (editing) {
+                    name = UI::InputText("##name" + i, name);
+                    floor["name"] = name;
+                    // if (name.Length == 0) name = "\\$i\\$aaaFloor " + i;
+                } else {
+                    UI::AlignTextToFramePadding();
+                    UI::Text(name);
+                }
+
+                UI::TableNextColumn();
+                if (editing) {
+                    height = UI::InputFloat("##height" + i, height);
+                    floor["height"] = height;
+                } else {
+                    UI::Text(tostring(height));
+                }
+
+                UI::TableNextColumn();
+                if (editing) {
+                    if (UI::Button(Icons::Check + " Done")) {
+                        editIx = -1;
+                    }
+                } else {
+                    if (UI::Button(Icons::Pencil + " Edit")) {
+                        editIx = i;
+                        // UI::SetKeyboardFocusHere(-1); // -2 = assert fail
+                    }
+                    UI::SameLine();
+                    UI::BeginDisabled(!UI::IsKeyDown(UI::Key::LeftShift));
+                    if (UI::Button(Icons::TrashO + " Delete")) {
+                        remIx = i;
+                    }
+                    UI::EndDisabled();
+                    UI::SameLine();
+                    UI::AlignTextToFramePadding();
+                    UI::Text("\\$8af"+Icons::InfoCircle);
+                    AddSimpleTooltip("Hold Shift to delete");
+                }
+                UI::PopID();
+            }
+
+            UI::EndTable();
+            UI::EndChild();
+
+            if (remIx != -1) {
+                removeFloor(remIx);
+                SaveToFile();
+            }
+        }
+
+        bool get_IsCreatingFloor() {
+            return creatingFloor !is null;
+        }
+
+        Json::Value@ creatingFloor = null;
+        void OnCreateNewFloor() {
+            auto floor = Json::Object();
+            floor["height"] = 0.0;
+            floor["name"] = "";
+            @creatingFloor = floor;
+            OnSelfAwaitingMouseClick();
+            startnew(SetEditorToTestMode);
+        }
+
+        void SetCreatingFloorHeight(float height) {
+            creatingFloor["height"] = height;
+            pushFloor(creatingFloor);
+            sortFloors();
+            @creatingFloor = null;
+            SaveToFile();
+        }
+
+
+        void OnMouseClick(int x, int y, int button) override {
+            if (creatingFloor is null) return;
+            if (!EditorIsInTestPlaceMode() || button != 0) {
+                // doing something else like moving camera. requeue intercept
+                startnew(CoroutineFunc(OnSelfAwaitingMouseClick));
+                return;
+            }
+            auto icPos = GetEditorItemCursorPos();
+            // car is offset +0.5
+            SetCreatingFloorHeight(icPos.y - 0.5);
+        }
     }
+
+    // MARK: VoiceLines Cmpnt
+
+    const vec3 DEFAULT_MT_SIZE = vec3(10.6666667, 8, 10.6666667);
+    const vec3 DEFAULT_VL_POS = vec3(32, 8, 32) - vec3(10.6666667, 0, 10.6666667) * 0.5;
+
+    class VoiceLineEl {
+        string file;
+        string subtitles;
+        string imageAsset;
+        int subtitleParts = 0;
+        vec3 posBottomCenter = DEFAULT_VL_POS;
+        vec3 size = DEFAULT_MT_SIZE;
+
+        VoiceLineEl() {}
+        VoiceLineEl(const Json::Value@ j) {
+            file = j.Get("file", "");
+            subtitles = j.Get("subtitles", "");
+            imageAsset = j.Get("imageAsset", "");
+            posBottomCenter = JsonToVec3(j["pos"], DEFAULT_VL_POS);
+            size = JsonToVec3(j["size"], DEFAULT_MT_SIZE);
+            subtitleParts = subtitles.Split("\n").Length;
+        }
+
+        vec3 get_posMin() {
+            return posBottomCenter - size * vec3(0.5, 0, 0.5);
+        }
+
+        Json::Value ToJson() {
+            auto j = Json::Object();
+            j["file"] = file;
+            j["subtitles"] = subtitles;
+            j["imageAsset"] = imageAsset;
+            j["pos"] = Vec3ToJson(posBottomCenter);
+            j["size"] = Vec3ToJson(size);
+            return j;
+        }
+
+        string PosStr() {
+            return "< " + posBottomCenter.x + ", " + posBottomCenter.y + ", " + posBottomCenter.z + " >";
+        }
+
+        void DrawEditor(ProjectVoiceLinesComponent@ cmp, ProjectTab@ pTab) {
+            bool changedFile = false, changedSubtitles = false;
+            string fullUrl = cmp.UrlPrefix + file;
+
+            file = UI::InputText("File", file, changedFile);
+            UI::SameLine();
+            if (UI::Button(Icons::Download + " Test")) {
+                OpenBrowserURL(fullUrl);
+            }
+            AddSimpleTooltip("Full URL: " + fullUrl);
+
+            if (file.EndsWith(".mp3") && file.Length > 4) {
+                UI::Text(BoolIcon(true) + " file name looks good.");
+            } else {
+                UI::Text(BoolIcon(false) + " file name should be an .mp3 file. (It is appended to UrlPrefix)");
+            }
+
+            UI::Separator();
+
+            UI::Text("Subtitles:");
+            subtitles = UI::InputTextMultiline("##subtitles", subtitles, changedSubtitles);
+            DrawSameLineSubtitlesHelper();
+            UI::Text("Subtitle Parts: " + subtitleParts);
+
+            if (subtitles.Length > 0) {
+                if (!subtitles.StartsWith("0:")) UI::Text(BoolIcon(false) + " Subtitles should start at t = 0. (First line should start with \"0:\")");
+            }
+
+            imageAsset = UI::InputText("Speaker Image", imageAsset);
+            auto assetsComp = pTab.GetAssetsComponent();
+            UI::AlignTextToFramePadding();
+            if (assetsComp.HasImageAsset(imageAsset)) {
+                UI::Text(BoolIcon(true) + " Image asset found.");
+            } else if (imageAsset.Length > 0) {
+                UI::Text(BoolIcon(false) + " Image asset not found.");
+                UI::SameLine();
+                if (UI::Button(Icons::Plus + " Add Image Asset")) {
+                    assetsComp.AddImageAsset(imageAsset);
+                    assetsComp.SaveToFile();
+                }
+            }
+
+            UI::Separator();
+
+            if (cmp.IAmAwaitingMouseClick) {
+                posBottomCenter = GetEditorItemCursorPos() - vec3(0, 0.5, 0);
+                UI::BeginDisabled();
+                UI::InputFloat3("Position##pos", posBottomCenter, "%.3f", UI::InputTextFlags::ReadOnly);
+                UI::EndDisabled();
+            } else {
+                posBottomCenter = UI::InputFloat3("Position##pos", posBottomCenter);
+            }
+            UI::SameLine();
+            if (UI::Button(Icons::PencilSquareO + " Set")) OnClickSetPos(cmp);
+
+            size = UI::InputFloat3("Size##size", size);
+
+            if (UI::Button(Icons::Eye + " Show")) {
+                SetEditorCameraToPos(posBottomCenter);
+            }
+
+            UI::Separator();
+            UI::Text("Hints:");
+            UI::TextWrapped("- Make sure the bottom of the trigger is on the ground (or slightly below it).");
+            UI::TextWrapped("- The mediatracker trigger size is 10.667 x 8 x 10.667");
+        }
+
+        void OnClickSetPos(ProjectVoiceLinesComponent@ cmp) {
+            startnew(SetEditorToTestMode);
+            cmp.OnSelfAwaitingMouseClick();
+        }
+
+        void DrawSameLineSubtitlesHelper() {
+            UI::SameLine();
+            UI::AlignTextToFramePadding();
+            UI::Text(Icons::InfoCircle);
+            bool circleClicked = UI::IsItemClicked(UI::MouseButton::Left);
+            AddSimpleTooltip(SUBTITLES_HELP);
+            if (circleClicked) OpenBrowserURL("https://github.com/XertroV/tm-dips-plus-plus/blob/0d481094ef9fabb2095f93f853d841604ffaf35f/remote_assets/secret/subs-3948765.txt");
+        }
+    }
+
+    const string SUBTITLES_HELP = "# Subtitles Help\n\n"
+        "Line format: `<startTime_ms>: <text>`\n"
+        "Example: `500: Before you continue,`\n"
+        "- Starts at 0.5 seconds\n"
+        "- Text shown: \"Before you continue,\"\n\n"
+        + Icons::ExclamationCircle + " Also: put an empty subtitle line at the end to better control fade out timing.\n\n"
+        "Click to open an example subtitles file in the browser.\n";
 
     class ProjectVoiceLinesComponent : ProjectComponent {
         ProjectVoiceLinesComponent(const string &in jsonPath, ProjectMeta@ meta) {
@@ -995,23 +1298,456 @@ namespace CM_Editor {
             name = "Voice Lines";
             icon = Icons::CommentO;
             type = EProjectComponent::VoiceLines;
+            thisTabClickRequiresTestPlaceMode = true;
+        }
+
+        // proxy methods for data access (px = proxy)
+        uint get_nbLines() const { return ro_data.HasKey("lines") ? ro_data["lines"].Length : 0; }
+        VoiceLineEl getLine(uint i) const { return VoiceLineEl(ro_data["lines"][i]); }
+        void setLine(uint i, VoiceLineEl@ vl) { rw_lines[i] = vl.ToJson(); }
+        string get_UrlPrefix() const { return ro_data.Get("urlPrefix", ""); }
+        void set_UrlPrefix(const string &in v) { rw_data["urlPrefix"] = v; }
+
+        Json::Value@ get_rw_lines() {
+            if (!ro_data.HasKey("lines") || ro_data["lines"].GetType() != Json::Type::Array) {
+                rw_data["lines"] = Json::Array();
+            }
+            return rw_data["lines"];
+        }
+
+        int PushVoiceLine(VoiceLineEl@ vl) {
+            auto @lines = rw_lines;
+            lines.Add(vl.ToJson());
+            return lines.Length - 1;
+        }
+
+        void CreateDefaultJsonObject() override {
+            auto j = Json::Object();
+            j["lines"] = Json::Array();
+            j["urlPrefix"] = "";
+            rw_data = j;
+        }
+
+        void DrawComponentInner(ProjectTab@ pTab) override {
+            if (editingVL >= int(nbLines)) {
+                NotifyWarning("Invalid voice line index: " + editingVL);
+                editingVL = -1;
+            }
+            DrawSelectedVLBox();
+            // if not editing, show header
+            if (editingVL == -1) {
+                DrawHeader();
+                // if still not editing, draw VLs
+                if (editingVL == -1) {
+                    UI::Separator();
+                    DrawVoiceLines();
+                }
+            } else {
+                // only draw editing if it was not set this frame to avoid flicker
+                DrawEditVoiceLine(pTab);
+            }
+        }
+
+        void DrawSelectedVLBox() {
+            if (editingVL != -1) @vlToDraw = getLine(editingVL);
+            if (vlToDraw is null) return;
+            nvgDrawWorldBox(vlToDraw.posMin, vlToDraw.size, cOrange);
+        }
+
+        int editingVL = -1;
+        VoiceLineEl@ vlToDraw = null;
+
+        void DrawHeader() {
+            if (UI::Button(Icons::Plus + " Add Voice Line")) {
+                OnCreateNewVoiceLine();
+            }
+            bool urlPrefixChanged = false;
+            string urlPrefix = UI::InputText("URL Prefix", UrlPrefix, urlPrefixChanged);
+            if (urlPrefixChanged) {
+                UrlPrefix = urlPrefix;
+            }
+        }
+
+        void DrawEditVoiceLine(ProjectTab@ pTab) {
+            bool clickedEnd = false;
+            UI::PushID("vlEdit" + editingVL);
+            auto vl = getLine(editingVL);
+
+            UI::AlignTextToFramePadding();
+            UI::Text("Editing VL: " + editingVL);
+
+            UI::SameLine();
+            auto pos1 = UI::GetCursorPos();
+            if (UI::Button(Icons::FloppyO + " Save")) {
+                clickedEnd = true;
+            }
+
+            UI::SameLine();
+            auto saveWidth = UI::GetCursorPos().x - pos1.x;
+
+            auto avail = UI::GetContentRegionAvail();
+            UI::Dummy(vec2(Math::Max(0.0, avail.x - saveWidth - 12 * g_scale), 0));
+            UI::SameLine();
+            // UI::BeginDisabled(!UI::IsKeyDown(UI::Key::LeftShift));
+            if (UI::Button(Icons::TrashO + " Delete")) {
+                startnew(CoroutineFuncUserdataInt64(OnDeleteVoiceLine), editingVL);
+            }
+            // UI::EndDisabled();
+
+            UI::Separator();
+
+            vl.DrawEditor(this, pTab);
+            setLine(editingVL, vl);
+
+            UI::PopID();
+
+            if (clickedEnd) {
+                editingVL = -1;
+            }
+        }
+
+        void OnDeleteVoiceLine(int64 i) {
+            if (i >= int64(nbLines)) return;
+            auto @lines = rw_lines;
+            lines.Remove(i);
+            editingVL = -1;
+            SaveToFile();
+        }
+
+        void OnCreateNewVoiceLine() {
+            auto vl = VoiceLineEl();
+            editingVL = PushVoiceLine(vl);
+            OnSetVoiceLineToDraw(vl, false);
+        }
+
+        void DrawVoiceLines() {
+            string urlPrefix = UrlPrefix;
+            UI::Text("# Voice Lines: " + nbLines);
+            UI::Separator();
+            UI::BeginChild("vl");
+
+            UI::BeginTable("Voice Lines", 4, UI::TableFlags::SizingStretchProp);
+            UI::TableSetupColumn("File", UI::TableColumnFlags::WidthStretch);
+            UI::TableSetupColumn("Has Subtitles", UI::TableColumnFlags::WidthStretch);
+            UI::TableSetupColumn("Position", UI::TableColumnFlags::WidthStretch);
+            UI::TableSetupColumn("Actions", UI::TableColumnFlags::WidthFixed);
+            UI::TableHeadersRow();
+
+            for (uint i = 0; i < nbLines; i++) {
+                UI::PushID("vl" + i);
+                auto vl = getLine(i);
+                string fullUrl = urlPrefix + vl.file;
+                UI::TableNextRow();
+                UI::TableNextColumn();
+                UI::AlignTextToFramePadding();
+                UI::Text(vl.file.Length > 0 ? vl.file : "\\$i\\$aaaNo file name");
+                UI::SameLine();
+                if (UI::Button(Icons::Download + " Test URL")) {
+                    OpenBrowserURL(fullUrl);
+                }
+                AddSimpleTooltip(fullUrl);
+
+                UI::TableNextColumn();
+                UI::Text(BoolIcon(vl.subtitles.Length > 0) + " / parts: " + vl.subtitleParts);
+                AddSimpleTooltip("Subtitles:\n" + vl.subtitles);
+
+                UI::TableNextColumn();
+                UI::Text(vl.PosStr());
+                UI::SameLine();
+                if (UI::Button(Icons::Crosshairs + " Show")) {
+                    OnSetVoiceLineToDraw(vl);
+                }
+
+                UI::TableNextColumn();
+                if (UI::Button(Icons::Pencil + " Edit")) {
+                    editingVL = i;
+                    OnSetVoiceLineToDraw(vl);
+                }
+                UI::PopID();
+            }
+
+            UI::EndTable();
+            UI::EndChild();
+        }
+
+
+        void OnSetVoiceLineToDraw(VoiceLineEl@ vl, bool focusCamera = true) {
+            @vlToDraw = vl;
+            if (focusCamera) {
+                SetEditorCameraToPos(vl.posBottomCenter, vl.size.Length() * 4.0);
+            }
+        }
+
+        void OnMouseClick(int x, int y, int button) override {
+            if (!EditorIsInTestPlaceMode()) {
+                // doing something else like moving camera. requeue intercept
+                startnew(CoroutineFunc(OnSelfAwaitingMouseClick));
+                return;
+            }
         }
     }
 
-    string BoolIcon(bool f) {
-        return f
-            ? "\\$<\\$4f4" + Icons::Check + "\\$>"
-            : "\\$<\\$f44" + Icons::Times + "\\$>";
+    // MARK: Assets
+
+    enum AssetTy {
+        Image,
+        Sound
     }
+
+    string AssetTy_ToKey(AssetTy ty) {
+        switch (ty) {
+            case AssetTy::Image: return "images";
+            case AssetTy::Sound: return "sounds";
+        }
+        throw("Invalid AssetTy: " + tostring(ty));
+        return "";
+    }
+
+    class ProjectAssetsComponent : ProjectComponent {
+        ProjectAssetsComponent(const string &in jsonPath, ProjectMeta@ meta) {
+            super(jsonPath, meta);
+            name = "Assets";
+            icon = Icons::FileO;
+            type = EProjectComponent::Assets;
+        }
+
+        string get_UrlPrefix() const { return ro_data.Get("urlPrefix", ""); }
+        void set_UrlPrefix(const string &in v) { rw_data["urlPrefix"] = v; }
+
+        Json::Value@ getRwAssets(AssetTy ty) {
+            auto key = AssetTy_ToKey(ty);
+            if (!ro_data.HasKey(key) || ro_data[key].GetType() != Json::Type::Array) {
+                rw_data[key] = Json::Array();
+            }
+            return rw_data[key];
+        }
+
+        const Json::Value@ getRoAssets(AssetTy ty) {
+            auto key = AssetTy_ToKey(ty);
+            if (!ro_data.HasKey(key) || ro_data[key].GetType() != Json::Type::Array) {
+                rw_data[key] = Json::Array();
+            }
+            return ro_data[key];
+        }
+
+        void pushAsset(AssetTy ty, const string &in asset) {
+            auto @assets = getRwAssets(ty);
+            assets.Add(asset);
+        }
+
+        void CreateDefaultJsonObject() override {
+            auto j = Json::Object();
+            j["urlPrefix"] = "";
+            j["images"] = Json::Array();
+            j["sounds"] = Json::Array();
+            rw_data = j;
+        }
+
+        void DrawComponentInner(ProjectTab@ pTab) override {
+            UrlPrefix = UI::InputText("URL Prefix", UrlPrefix);
+            UI::Separator();
+            UI::BeginTabBar("Assets", UI::TabBarFlags::None);
+            if (UI::BeginTabItem("Images")) {
+                DrawAssetTab(AssetTy::Image, pTab);
+                UI::EndTabItem();
+            }
+            if (UI::BeginTabItem("Audio")) {
+                DrawAssetTab(AssetTy::Sound, pTab);
+                UI::EndTabItem();
+            }
+            UI::EndTabBar();
+        }
+
+        bool HasImageAsset(const string &in asset) {
+            return HasAsset(AssetTy::Image, asset);
+        }
+
+        bool HasAsset(AssetTy ty, const string &in asset) {
+            auto @images = getRoAssets(ty);
+            for (uint i = 0; i < images.Length; i++) {
+                if (images[i].GetType() == Json::Type::String && string(images[i]) == asset) return true;
+            }
+            return false;
+        }
+
+        void AddImageAsset(const string &in asset) {
+            if (HasImageAsset(asset)) {
+                NotifyWarning("Image asset already exists: " + asset);
+                return;
+            }
+            pushAsset(AssetTy::Image, asset);
+        }
+
+        string iAsset = "";
+        AssetTy lastAssetTy = AssetTy::Image;
+
+        void DrawAssetTab(AssetTy ty, ProjectTab@ pTab) {
+            if (lastAssetTy != ty) {
+                lastAssetTy = ty;
+                iAsset = "";
+            }
+            string assetType = AssetTy_ToKey(ty);
+            bool changed = false;
+            iAsset = UI::InputText("Asset File(s)", iAsset, changed);
+            AddSimpleTooltip("Separate with commas to add many.");
+            UI::SameLine();
+            UI::BeginDisabled(iAsset.Length == 0);
+            if (UI::Button(Icons::Plus + " Add")) {
+                AddAssetsFromInput(ty, iAsset);
+                iAsset = "";
+            }
+            UI::EndDisabled();
+
+            UI::BeginChild(assetType + "Assets");
+            UI::BeginTable(assetType + "Assets", 2, UI::TableFlags::SizingStretchProp);
+            UI::TableSetupColumn("Asset", UI::TableColumnFlags::WidthStretch);
+            UI::TableSetupColumn("Actions", UI::TableColumnFlags::WidthFixed);
+            // UI::TableHeadersRow();
+            auto @assets = getRoAssets(ty);
+            int remIx = -1;
+            for (uint i = 0; i < assets.Length; i++) {
+                UI::PushID(assetType + i);
+                UI::TableNextRow();
+                auto asset = string(assets[i]);
+                UI::TableNextColumn();
+                UI::AlignTextToFramePadding();
+                UI::Text(asset);
+                UI::SameLine();
+                if (UI::Button(Icons::Download + " Test")) {
+                    try {
+                        OpenBrowserURL(UrlPrefix + asset);
+                    } catch {
+                        NotifyWarning("Invalid URL: " + UrlPrefix + asset);
+                    }
+                }
+                AddSimpleTooltip("Full URL: " + UrlPrefix + asset);
+
+                UI::TableNextColumn();
+                if (UI::Button(Icons::TrashO + " Delete")) {
+                    remIx = i;
+                }
+                UI::PopID();
+            }
+            UI::EndTable();
+            UI::EndChild();
+
+            if (remIx != -1) {
+                auto @assets = getRwAssets(ty);
+                assets.Remove(remIx);
+                SaveToFile();
+            }
+        }
+
+        void AddAssetsFromInput(AssetTy ty, const string &in input) {
+            auto @assets = getRwAssets(ty);
+            auto assetList = input.Split(",");
+            int nbAdded = 0;
+            for (uint i = 0; i < assetList.Length; i++) {
+                string asset = assetList[i].Trim();
+                if (asset.Length == 0) continue;
+                if (HasAsset(ty, asset)) {
+                    NotifyWarning("Asset already exists: " + asset);
+                    continue;
+                }
+                assets.Add(asset);
+                trace("Added asset: " + asset);
+                nbAdded++;
+            }
+            SaveToFile();
+            Notify("Added " + nbAdded + " assets.");
+        }
+    }
+}
+
+
+// MARK: Icons
+
+string BoolIcon(bool f) {
+    return f
+        ? "\\$<\\$4f4" + Icons::Check + "\\$>"
+        : "\\$<\\$f44" + Icons::Times + "\\$>";
+}
+
+
+// MARK: Misc
+
+
+void SetEditorCameraToPos(vec3 pos, float dist = -1.0) {
+    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    auto pmt = editor.PluginMapType;
+    pmt.CameraTargetPosition = pos;
+    if (dist > 0.0) pmt.CameraToTargetDistance = dist;
+}
+
+void SetEditorToTestMode() {
+    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    editor.PluginMapType.PlaceMode = CGameEditorPluginMap::EPlaceMode::Test;
+    editor.PluginMapType.EditMode = CGameEditorPluginMap::EditMode::Place;
+}
+
+vec3 GetEditorItemCursorPos() {
+    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    if (editor is null || editor.ItemCursor is null) {
+        return vec3(-1.0);
+    }
+    return editor.ItemCursor.CurrentPos;
+}
+
+// edit mode = place and place mode = test
+bool EditorIsInTestPlaceMode() {
+    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    auto pmt = editor.PluginMapType;
+    return pmt.EditMode == CGameEditorPluginMap::EditMode::Place && pmt.PlaceMode == CGameEditorPluginMap::EPlaceMode::Test;
+}
+
+
+void nvgDrawWorldBox(vec3 pos, vec3 size, vec4 color, float strokeWidth = 2.0) {
+    vec3[] corners = array<vec3>(8);
+    // Bottom face
+    corners[0] = pos;
+    corners[1] = pos + vec3(size.x, 0, 0);
+    corners[2] = pos + vec3(size.x, 0, size.z);
+    corners[3] = pos + vec3(0, 0, size.z);
+    // Top face
+    corners[4] = pos + vec3(0, size.y, 0);
+    corners[5] = pos + vec3(size.x, size.y, 0);
+    corners[6] = pos + vec3(size.x, size.y, size.z);
+    corners[7] = pos + vec3(0, size.y, size.z);
+
+    nvg::BeginPath();
+    nvg::StrokeColor(color);
+    nvg::StrokeWidth(strokeWidth);
+    nvg::LineCap(nvg::LineCapType::Round);
+    nvg::LineJoin(nvg::LineCapType::Round);
+
+    // Bottom face loop (0→1→2→3→0)
+    nvgMoveToWorldPos(corners[0]);
+    nvgLineToWorldPos(corners[1]);
+    nvgLineToWorldPos(corners[2]);
+    nvgLineToWorldPos(corners[3]);
+    nvgLineToWorldPos(corners[0]);
+
+    // Top face loop (4→5→6→7→4)
+    nvgMoveToWorldPos(corners[4]);
+    nvgLineToWorldPos(corners[5]);
+    nvgLineToWorldPos(corners[6]);
+    nvgLineToWorldPos(corners[7]);
+    nvgLineToWorldPos(corners[4]);
+
+    // Vertical edges (0→4, 1→5, 2→6, 3→7)
+    nvgMoveToWorldPos(corners[0]); nvgLineToWorldPos(corners[4]);
+    nvgMoveToWorldPos(corners[1]); nvgLineToWorldPos(corners[5]);
+    nvgMoveToWorldPos(corners[2]); nvgLineToWorldPos(corners[6]);
+    nvgMoveToWorldPos(corners[3]); nvgLineToWorldPos(corners[7]);
+
+    nvg::Stroke();
+    nvg::ClosePath();
 }
 
 
 
 
-
-
-
-// Stub
+// MARK: Stub
 
 class DipsSpec {
     string minClientVersion;
