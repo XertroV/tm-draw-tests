@@ -13,6 +13,7 @@ void RenderMenu() {
     if (UI::MenuItem("g_RunDipsItemExp", "", g_RunDipsItemExp)) {
         g_RunDipsItemExp = !g_RunDipsItemExp;
     }
+    CM_Editor::RenderMenu();
     if (UI::BeginMenu(MenuTitle + " Debug")) {
         if (UI::MenuItem("Draw Debug Window", "", g_DrawLittleDebugWindow)) {
             g_DrawLittleDebugWindow = !g_DrawLittleDebugWindow;
@@ -94,8 +95,14 @@ TabGroup@ root;
 NG::GraphTab@ g_GraphTab;
 
 void Main() {
+    // startnew(PrintBlockInventory);
+    // TestOutStuff();
+    // ForceCastBufferTest();
+
     startnew(DipsItemExperiment).WithRunContext(Meta::RunContext::AfterMainLoop);
+    // for dips++ CustomMap
     CM_Editor::OnPluginLoad();
+    CM_Editor::Main();
 
     // tmp disable for load speed
     if (false) InitNodeGraphStuff();
@@ -134,6 +141,36 @@ vec2 g_lastMousePos;
 void OnMouseMove(int x, int y) {
     g_lastMousePos = vec2(x, y);
     // trace(g_lastMousePos.ToString());
+}
+
+bool g_InterceptOnMouseClick = false;
+bool g_InterceptClickRequiresTestMode = false;
+// x, y, button
+int3 g_InterceptedMouseClickPosBtn = int3();
+CM_Editor::ProjectComponent@ componentWaitingForMouseClick = null;
+
+void OnInterceptedMouseClick(int x, int y, int button) {
+    g_InterceptedMouseClickPosBtn.x = x;
+    g_InterceptedMouseClickPosBtn.y = y;
+    g_InterceptedMouseClickPosBtn.z = button;
+    g_InterceptOnMouseClick = false;
+    if (componentWaitingForMouseClick !is null) {
+        try {
+            componentWaitingForMouseClick.OnMouseClick(x, y, button);
+        } catch {
+            error("OnInterceptedMouseClick failed: " + getExceptionInfo());
+        }
+        @componentWaitingForMouseClick = null;
+    }
+}
+
+/** Called whenever a mouse button is pressed. `x` and `y` are the viewport coordinates. */
+UI::InputBlocking OnMouseButton(bool down, int button, int x, int y) {
+    if (down && button == 0 && g_InterceptOnMouseClick && (!g_InterceptClickRequiresTestMode || EditorIsInTestPlaceMode())) {
+        OnInterceptedMouseClick(x, y, button);
+        return UI::InputBlocking::Block;
+    }
+    return UI::InputBlocking::DoNothing;
 }
 
 bool IsLMBPressed() {

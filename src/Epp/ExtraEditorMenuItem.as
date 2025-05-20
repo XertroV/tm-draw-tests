@@ -178,7 +178,7 @@ class MacroRecordMainToolbarItem : ExtraMainToolbarItem {
 
 // x,y in [-1, 0, 1]
 int Get_NvgAlign(int8 x, int8 y) {
-    int r;
+    int r = 0;
     r |= (x < 0 ? nvg::Align::Left : x == 0 ? nvg::Align::Center : nvg::Align::Right);
     r |= (y < 0 ? nvg::Align::Top : y == 0 ? nvg::Align::Middle : nvg::Align::Bottom);
     return r;
@@ -207,8 +207,10 @@ class ToolbarExtras {
 
     void UpdateEditorBounds() {
         halfScreen = g_screen * .5;
-        auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+        auto app = GetApp();
+        auto editor = cast<CGameCtnEditorFree>(app.Editor);
         doDraw = editor !is null && IsActionMapEditor() && EditorToolbarIsVisible(editor.EditorInterface.InterfaceRoot);
+        doDraw = doDraw && int(app.LoadProgress.State) == 0;
         if (!doDraw) return;
         auto loc = mat4(editor.EditorInterface.InterfaceRoot.Parent.Item.Corpus.Location);
         scale = vec2(loc.xx, loc.yy);

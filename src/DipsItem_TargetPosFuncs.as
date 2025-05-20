@@ -67,7 +67,7 @@ mat4 CalcTarget_Char() {
     if (S_SillyCrown) tiltRot = tiltRotInv;
 
     // auto neck = vec3(0, 0.9701 - CharHeadTopNeckOffset, -0.1) + head;
-    auto neck = vec3(0, 0.8701 - CharHeadTopNeckOffset, -0.1501) + head;
+    auto neck = vec3(0, 0.8501 - CharHeadTopNeckOffset, -0.151) + head;
     neck = (invR * neck).xyz;
 
     // auto m = mat4::Translate(charVis.Pos + neck) * r * tiltRot;
